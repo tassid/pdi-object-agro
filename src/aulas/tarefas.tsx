@@ -42,13 +42,13 @@ export const blocoTarefas: Bloco = {
   slides: [
     { titulo: 'Quatro perguntas sobre a mesma foto', img: 'quatro_tarefas', legenda: 'WGISD, anotações originais', pontos: ['O que é? → classificação', 'Onde e quantos? → detecção', 'Que pixels? → segmentação semântica', 'Que pixels de cada objeto? → instâncias'], notas: 'Fazer as quatro perguntas à turma antes de mostrar os nomes das tarefas.' },
     { titulo: 'Três modelos reais, a mesma foto', img: 'real_tres_tarefas', notas: 'Os três modelos foram treinados de verdade no WGISD para este material: classificação de recortes por variedade, detecção e segmentação de instâncias.' },
-    { titulo: 'Classificação', pontos: ['Entrada: a imagem inteira ou um recorte', 'Saída: uma classe e a probabilidade', 'É o problema da Aula 5 (salmão ou robalo)', 'CVAT: tag · YOLO: yolo11n-cls.pt'] },
-    { titulo: 'Detecção', pontos: ['Entrada: a foto inteira', 'Saída: caixa + classe + confiança, por objeto', 'Permite contar', 'CVAT: retângulo · YOLO: yolo11n.pt'] },
-    { titulo: 'Segmentação', pontos: ['Semântica: classe de cada pixel (área)', 'Instâncias: máscara de cada objeto (área e forma de cada um)', 'CVAT: polígono ou pincel · YOLO: yolo11n-seg.pt'] },
+    { titulo: 'Classificação', img: 'real_cls_matriz', legenda: 'Classificador real de variedades', pontos: ['Entrada: a imagem inteira ou um recorte', 'Saída: uma classe e a probabilidade', 'É o problema da Aula 5 (salmão ou robalo)', 'CVAT: tag · YOLO: yolo11n-cls.pt'] },
+    { titulo: 'Detecção', img: 'real_predicoes_teste', legenda: 'Detector real no teste', pontos: ['Entrada: a foto inteira', 'Saída: caixa + classe + confiança, por objeto', 'Permite contar', 'CVAT: retângulo · YOLO: yolo11n.pt'] },
+    { titulo: 'Segmentação', img: 'real_seg_pred', legenda: 'Segmentação real: anotado × previsto', pontos: ['Semântica: classe de cada pixel (área)', 'Instâncias: máscara de cada objeto (área e forma de cada um)', 'CVAT: polígono ou pincel · YOLO: yolo11n-seg.pt'] },
     { titulo: 'No CVAT, cada tarefa tem a sua ferramenta', img: 'cvat/image249', legenda: 'Tags no CVAT (documentação oficial)', pontos: ['Tag → classificação', 'Retângulo → detecção', 'Polígono / pincel → segmentação', 'O formato de exportação muda junto'] },
-    { titulo: 'O mesmo fluxo, cinco etapas', pontos: ['1. Definir a pergunta e a tarefa', '2. Anotar no CVAT com a ferramenta da tarefa', '3. Exportar no formato da tarefa', '4. Treinar o YOLO com os pesos da tarefa', '5. Avaliar com a métrica da tarefa'] },
-    { titulo: 'Resultados reais por tarefa', pontos: [`Classificação de variedade: acerto de ${pct(R.cls.test.top1)} no teste`, `Detecção de cachos: mAP50 de ${d2(R.A_pre.test.mAP50)}`, `Segmentação de cachos: mAP50 de máscara de ${d2(R.seg.test.mask_mAP50)}`], notas: 'Os números não são comparáveis entre si: cada tarefa tem sua métrica. Servem para mostrar que as três funcionam no mesmo conjunto.' },
-    { titulo: 'Como escolher', pontos: ['Preciso contar? → detecção', 'Preciso de área ou forma de cada objeto? → instâncias', 'Só a área total importa? → semântica', 'Cada foto (ou recorte) tem um objeto? → classificação', 'Escolher a mais barata que responde à pergunta'] },
+    { titulo: 'O mesmo fluxo, cinco etapas', img: 'esq_fluxo', pontos: ['1. Definir a pergunta e a tarefa', '2. Anotar no CVAT com a ferramenta da tarefa', '3. Exportar no formato da tarefa', '4. Treinar o YOLO com os pesos da tarefa', '5. Avaliar com a métrica da tarefa'] },
+    { titulo: 'Resultados reais por tarefa', img: 'real_tres_tarefas', pontos: [`Classificação de variedade: acerto de ${pct(R.cls.test.top1)} no teste`, `Detecção de cachos: mAP50 de ${d2(R.A_pre.test.mAP50)}`, `Segmentação de cachos: mAP50 de máscara de ${d2(R.seg.test.mask_mAP50)}`], notas: 'Os números não são comparáveis entre si: cada tarefa tem sua métrica. Servem para mostrar que as três funcionam no mesmo conjunto.' },
+    { titulo: 'Como escolher', img: 'quatro_tarefas', legenda: 'As quatro tarefas na mesma foto', pontos: ['Preciso contar? → detecção', 'Preciso de área ou forma de cada objeto? → instâncias', 'Só a área total importa? → semântica', 'Cada foto (ou recorte) tem um objeto? → classificação', 'Escolher a mais barata que responde à pergunta'] },
   ],
   teoria: (
     <>
@@ -152,10 +152,10 @@ export const blocoClsSeg: Bloco = {
   min: 35,
   tipo: 'lab',
   slides: [
-    { titulo: 'O que muda no código', pontos: ['Pesos: -cls, (nada) ou -seg', 'Dados: pasta por classe ou data.yaml', 'Saída: r.probs, r.boxes ou r.masks', 'Métrica: top-1, mAP de caixa ou de máscara'] },
+    { titulo: 'O que muda no código', img: 'real_arquivos_ultralytics', legenda: 'Arquivos que o treino grava', pontos: ['Pesos: -cls, (nada) ou -seg', 'Dados: pasta por classe ou data.yaml', 'Saída: r.probs, r.boxes ou r.masks', 'Métrica: top-1, mAP de caixa ou de máscara'] },
     { titulo: 'Classificação real: variedade do cacho', img: 'real_cls_matriz', pontos: [`Acerto top-1 no teste: ${pct(R.cls.test.top1)}`, 'Erros concentrados nas variedades parecidas', 'Recortes da mesma foto nunca separados'] },
     { titulo: 'Segmentação real: máscara de cada cacho', img: 'real_seg_pred', pontos: [`mAP50 de máscara no teste: ${d2(R.seg.test.mask_mAP50)}`, `mAP50 de caixa do mesmo modelo: ${d2(R.seg.test.box_mAP50)}`, 'Só 137 fotos têm máscara: anotar contorno custa caro'] },
-    { titulo: 'Da caixa ao recorte', pontos: ['As caixas do detector viram recortes', 'Os recortes alimentam o classificador', 'Detectar + classificar = cascata'] },
+    { titulo: 'Da caixa ao recorte', img: 'aula5_recorte_vs_deteccao', pontos: ['As caixas do detector viram recortes', 'Os recortes alimentam o classificador', 'Detectar + classificar = cascata'] },
   ],
   teoria: (
     <>

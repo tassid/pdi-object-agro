@@ -341,7 +341,7 @@ export function buildDeck(aula: Aula): { slides: DeckSlide[]; inicio: Record<str
   slides.push({ kind: 'capa', titulo: aula.titulo, sub: 'Continuação da Aula 5 (Reconhecimento de Padrões)', rodape: 'Processamento de Imagens Aplicado à Agroindústria', notas: 'Abrir com a pergunta que fecha a Aula 5: como passar de classificar um objeto isolado para encontrar e contar vários objetos numa imagem de campo?' })
   const partes = <T,>(xs: T[], n: number) => { const k = Math.ceil(xs.length / n); const t = Math.ceil(xs.length / k); return Array.from({ length: k }, (_, i) => xs.slice(i * t, (i + 1) * t)) }
   partes(aula.objetivos, 4).forEach((g, i, all) =>
-    slides.push({ kind: 'conteudo', s: { titulo: all.length > 1 ? `Objetivos (${i + 1}/${all.length})` : 'Objetivos', pontos: g.map((o) => o.replace(/\.$/, '')), notas: 'Ler os objetivos em voz alta e indicar em qual bloco cada um é avaliado.' } }))
+    slides.push({ kind: 'conteudo', s: { titulo: all.length > 1 ? `Objetivos (${i + 1}/${all.length})` : 'Objetivos', img: ['real_tres_tarefas', 'esq_fluxo'][i % 2], pontos: g.map((o) => o.replace(/\.$/, '')), notas: 'Ler os objetivos em voz alta e indicar em qual bloco cada um é avaliado.' } }))
   aula.blocos.forEach((b) => {
     const enc = aula.encontros.find((e) => e.inicio === b.id)
     if (enc) slides.push({ kind: 'secao', kicker: `Encontro ${enc.n} de ${aula.encontros.length} · 300 min`, titulo: enc.titulo, sub: 'Processamento de Imagens Aplicado à Agroindústria' })
@@ -351,7 +351,7 @@ export function buildDeck(aula: Aula): { slides: DeckSlide[]; inicio: Record<str
     if (aula.intervalos.includes(b.id)) slides.push({ kind: 'secao', kicker: 'Intervalo', titulo: '20 minutos', sub: encontroDe(aula, b.id) === 2 ? 'O treinamento continua em execução na GPU.' : 'Conferir se todos têm acesso ao CVAT e ao Colab.' })
   })
   partes(aula.artigos, 6).forEach((g, i, all) =>
-    slides.push({ kind: 'conteudo', s: { titulo: all.length > 1 ? `Leituras (${i + 1}/${all.length})` : 'Leituras', pontos: g.map((a) => <><b>{a.tag}</b>: {a.ref.length > 120 ? a.ref.slice(0, 118) + '…' : a.ref}</>) } }))
+    slides.push({ kind: 'conteudo', s: { titulo: all.length > 1 ? `Leituras (${i + 1}/${all.length})` : 'Leituras', img: ['artigos/36152_capa', 'artigos/41807_capa', 'artigos/34166_capa', 'artigos/40855_capa'][i % 4], pontos: g.map((a) => <><b>{a.tag}</b>: {a.ref.length > 120 ? a.ref.slice(0, 118) + '…' : a.ref}</>) } }))
   return { slides, inicio }
 }
 

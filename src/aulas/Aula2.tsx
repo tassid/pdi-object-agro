@@ -39,10 +39,10 @@ export const aula2 = comProf(PROF2, {
       min: 30,
       tipo: 'lab',
       slides: [
-        { titulo: 'O que vamos construir hoje', pontos: ['Um notebook que vai da foto anotada até a contagem', 'Uma seção por bloco da aula', 'Funciona com o WGISD ou com o export do CVAT da dupla'], notas: 'Abrir um notebook em branco no Colab e construir junto com a turma; o notebook pronto fica como gabarito.' },
-        { titulo: 'Passo 1: ligar a GPU', pontos: ['Ambiente de execução → Alterar o tipo → GPU (T4)', 'Conferir com nvidia-smi', 'Sem GPU o treino leva horas'] },
-        { titulo: 'Passo 2: guardar no Drive', pontos: ['O Colab apaga tudo ao fechar a sessão', 'Montar o Drive e salvar runs/ lá', 'Pesos e resultados sobrevivem à queda'] },
-        { titulo: 'Passo 3: a pasta que o YOLO espera', pontos: [['dataset/', ['images/train, images/val, images/test', 'labels/… com um .txt por imagem', 'data.yaml com caminhos e nomes das classes']]], notas: 'Mostrar a estrutura no painel de arquivos do Colab depois de executar a célula de dados.' },
+        { titulo: 'O que vamos construir hoje', img: 'esq_fluxo', pontos: ['Um notebook que vai da foto anotada até a contagem', 'Uma seção por bloco da aula', 'Funciona com o WGISD ou com o export do CVAT da dupla'], notas: 'Abrir um notebook em branco no Colab e construir junto com a turma; o notebook pronto fica como gabarito.' },
+        { titulo: 'Passo 1: ligar a GPU', img: 'esq_colab', pontos: ['Ambiente de execução → Alterar o tipo → GPU (T4)', 'Conferir com nvidia-smi', 'Sem GPU o treino leva horas'] },
+        { titulo: 'Passo 2: guardar no Drive', img: 'esq_colab', pontos: ['O Colab apaga tudo ao fechar a sessão', 'Montar o Drive e salvar runs/ lá', 'Pesos e resultados sobrevivem à queda'] },
+        { titulo: 'Passo 3: a pasta que o YOLO espera', img: 'esq_pasta_yolo', pontos: [['dataset/', ['images/train, images/val, images/test', 'labels/… com um .txt por imagem', 'data.yaml com caminhos e nomes das classes']]], notas: 'Mostrar a estrutura no painel de arquivos do Colab depois de executar a célula de dados.' },
         { titulo: 'Passo 4: conferir antes de treinar', img: 'cvat/export_job_as_dataset_dialog', legenda: 'Exportação no CVAT: escolher Ultralytics YOLO e ligar Save images', pontos: ['Mesma quantidade de imagens e rótulos', 'Desenhar as caixas de uma foto', 'Nome da classe igual ao do CVAT'] },
       ],
       teoria: (
@@ -105,9 +105,9 @@ print(open(DATA).read())`} />
       min: 45,
       tipo: 'lab',
       slides: [
-        { titulo: 'Uma linha para treinar', formula: <code>YOLO("yolo11n.pt").train(data=DATA, epochs=40, imgsz=640, batch=16, patience=15)</code>, pontos: ['yolo11n.pt: pesos já treinados (COCO)', 'O modelo só ajusta o que já sabe para os cachos'] },
+        { titulo: 'Uma linha para treinar', img: 'real_curvas_treino', legenda: 'Treino real: perdas e mAP por época', formula: <code>YOLO("yolo11n.pt").train(data=DATA, epochs=40, imgsz=640, batch=16, patience=15)</code>, pontos: ['yolo11n.pt: pesos já treinados (COCO)', 'O modelo só ajusta o que já sabe para os cachos'] },
         { titulo: 'Por que começar de pesos prontos', img: 'real_curvas_treino', pontos: [`Com pesos prontos: mAP50 ${d2(R.A_pre.test.mAP50)} no teste`, `Do zero: ${d2(R.A_scratch.test.mAP50)}`, 'Mesmos dados, mesmo tempo de treino'], notas: 'Resultado real dos dois treinos feitos para este material (WGISD, 80 épocas).' },
-        { titulo: 'Os quatro parâmetros que importam', pontos: ['epochs: quantas vezes o modelo vê os dados', 'imgsz: tamanho da imagem; maior ajuda objetos pequenos', 'batch: imagens por passo; reduza se faltar memória', 'patience: para quando a validação não melhora'] },
+        { titulo: 'Os quatro parâmetros que importam', img: 'letterbox', legenda: 'imgsz: a foto reduzida para a entrada', pontos: ['epochs: quantas vezes o modelo vê os dados', 'imgsz: tamanho da imagem; maior ajuda objetos pequenos', 'batch: imagens por passo; reduza se faltar memória', 'patience: para quando a validação não melhora'] },
         { titulo: 'Parada antecipada num treino real', img: 'real_parada_antecipada', pontos: [`Melhor resultado na época ${R.best_epoch}`, `Parou sozinho na época ${R.epochs_B}`, 'best.pt guarda a melhor época'] },
         { titulo: 'Objetos pequenos: caso UTFPR', img: 'artigos/41804_p41', legenda: 'Costa (2024), UTFPR Cornélio Procópio, p. 41', pontos: ['Esporos ocupam poucos pixels', 'Aumentar imgsz ou fatiar a imagem', 'Custa mais memória e tempo'] },
         { titulo: 'O que o treino faz com as imagens', img: 'augmentation_real', pontos: ['Espelha, recorta, muda cor e junta quatro fotos (mosaico)', 'Só no treino, nunca na validação', 'Vem ligado por padrão'] },
@@ -186,8 +186,8 @@ PASTA = f"{BASE}/runs/uva"
       slides: [
         { titulo: 'O que o treino deixa na pasta', img: 'real_arquivos_ultralytics', pontos: ['results.png: perdas e métricas por época', 'val_batch0_pred.jpg: previsões', 'weights/best.pt: o modelo'] },
         { titulo: 'Acertos e erros numa foto', img: 'real_predicoes_teste', pontos: ['Azul: caixa certa', 'Laranja: caixa onde não há cacho', 'Vermelho: cacho que ficou sem caixa'] },
-        { titulo: 'Precisão e revocação em palavras', pontos: ['Precisão: das caixas que o modelo desenhou, quantas estão certas', 'Revocação: dos cachos que existem, quantos o modelo achou', `No teste real: precisão ${d2(R.A_pre.test.P)}, revocação ${d2(R.A_pre.test.R)}`] },
-        { titulo: 'mAP50 e mAP50-95', pontos: ['Um número que resume precisão e revocação', 'mAP50: aceita caixa razoavelmente encaixada', 'mAP50-95: exige caixa bem justa', `Teste real: ${d2(R.A_pre.test.mAP50)} e ${d2(R.A_pre.test.mAP5095)}`] },
+        { titulo: 'Precisão e revocação em palavras', img: 'real_limiar_confianca', legenda: 'Precisão e revocação em quatro limiares', pontos: ['Precisão: das caixas que o modelo desenhou, quantas estão certas', 'Revocação: dos cachos que existem, quantos o modelo achou', `No teste real: precisão ${d2(R.A_pre.test.P)}, revocação ${d2(R.A_pre.test.R)}`] },
+        { titulo: 'mAP50 e mAP50-95', img: 'map_limiares', legenda: 'A mesma caixa nos dez limiares', pontos: ['Um número que resume precisão e revocação', 'mAP50: aceita caixa razoavelmente encaixada', 'mAP50-95: exige caixa bem justa', `Teste real: ${d2(R.A_pre.test.mAP50)} e ${d2(R.A_pre.test.mAP5095)}`] },
         { titulo: 'Escolher o limiar de confiança', img: 'real_limiar_confianca', pontos: ['Limiar baixo: acha mais, erra mais', 'Limiar alto: erra menos, deixa cachos para trás', `Melhor equilíbrio (F1) em conf ≈ ${d2(R.conf_F1max)}`] },
         { titulo: 'A curva que ajuda a escolher', img: 'real_pr_f1', pontos: ['Gerada automaticamente (BoxF1_curve.png)', 'Escolher na validação, nunca no teste'] },
         { titulo: 'Caso UTFPR: curva F1 num detector embarcado', img: 'artigos/41609_p37', legenda: 'Saito (2025), UTFPR Cornélio Procópio, p. 37', pontos: ['Mesma curva usada para escolher o limiar', 'Detector de daninhas em Raspberry Pi'] },
@@ -261,11 +261,11 @@ print(f"precisão {val.box.mp:.2f} · revocação {val.box.mr:.2f} · mAP50 {val
       min: 50,
       tipo: 'lab',
       slides: [
-        { titulo: 'Do modelo à planilha', pontos: ['predict em fotos novas', 'Uma linha por foto: nome e número de cachos', 'Salvar contagem.csv no Drive'] },
+        { titulo: 'Do modelo à planilha', img: 'real_contagem', legenda: 'Contagem real por foto', pontos: ['predict em fotos novas', 'Uma linha por foto: nome e número de cachos', 'Salvar contagem.csv no Drive'] },
         { titulo: 'Quanto a contagem erra', img: 'real_contagem', pontos: [`Erro médio: ${d2(R.EAM)} cachos por foto`, R.vies > 0 ? `O modelo conta a mais (${d2(R.vies)} por foto)` : `O modelo conta a menos (${d2(R.vies)} por foto)`, `Erro total: ${pct(R.erro_rel)} dos cachos`] },
         { titulo: 'Caso UTFPR: contar gado com drone', img: 'artigos/41807_p22', legenda: 'Mascaro Junior (2025), UTFPR Cornélio Procópio, p. 22', pontos: ['Mesma receita: anotar, treinar, contar', 'Animais agrupados geram caixas duplicadas', 'Resumo: mAP50 de 93,7%'] },
         { titulo: 'Vídeo: contar sem repetir', img: 'rastreamento_ids', pontos: ['O mesmo cacho aparece em vários quadros', 'O rastreador dá um número a cada objeto', 'Contagem = números diferentes'] },
-        { titulo: 'Levar o modelo para fora do Colab', pontos: ['export(format="onnx"): computador comum', 'tflite / ncnn: celular e Raspberry Pi', 'Conferir as previsões depois de exportar'] },
+        { titulo: 'Levar o modelo para fora do Colab', img: 'artigos/36152_p56', legenda: 'YOLO embarcado na armadilha (Medeiros, 2025)', pontos: ['export(format="onnx"): computador comum', 'tflite / ncnn: celular e Raspberry Pi', 'Conferir as previsões depois de exportar'] },
       ],
       teoria: (
         <>
@@ -320,7 +320,7 @@ print(len(YOLO(caminho).predict("foto.jpg")[0].boxes), "caixas no modelo exporta
       min: 45,
       tipo: 'lab',
       slides: [
-        { titulo: 'O teste que importa', pontos: ['Fotos de outro talhão, outra data, outra variedade', 'É assim que o modelo será usado', 'A validação engana se for parecida demais com o treino'] },
+        { titulo: 'O teste que importa', img: 'dominio_variedades', legenda: 'Cinco variedades, cinco aparências', pontos: ['Fotos de outro talhão, outra data, outra variedade', 'É assim que o modelo será usado', 'A validação engana se for parecida demais com o treino'] },
         { titulo: 'Resultado real: variedade nunca vista', img: 'real_dominio_syrah', pontos: [`Validação (variedades vistas): mAP50 ${d2(R.B_dom.val.mAP50)}`, `Syrah, nunca vista: ${d2(R.B_dom.test.mAP50)}`, `Caixas justas: ${d2(R.B_dom.val.mAP5095)} → ${d2(R.B_dom.test.mAP5095)}`], notas: 'Perguntar à turma, antes de mostrar os números, quanto achavam que o modelo ia perder.' },
         { titulo: 'O que muda de um lugar para outro', img: 'dominio_variedades', pontos: ['Cor e maturação', 'Luz, câmera, distância', 'Fundo e densidade de objetos'] },
         { titulo: 'Classificar os erros', img: 'real_predicoes_teste', pontos: ['Oclusão por folha', 'Cacho pequeno ou na borda', 'Caixa duplicada', 'Cacho que ninguém anotou'] },
@@ -378,7 +378,7 @@ print("validação mAP50:", round(val.box.map50, 3), "| teste mAP50:", round(tes
         { titulo: 'O falso positivo de campo', img: 'artigos/36152_p62', legenda: 'Medeiros (2025), p. 62', pontos: ['O que o laboratório não mostrou', 'Que regra do protocolo evitaria?'] },
         { titulo: 'Grãos de soja: detectar e depois classificar', img: 'artigos/34166_p55', legenda: 'Almeida (2024), UTFPR Curitiba, p. 55', pontos: ['YOLO acha os grãos', 'Outra rede classifica a avaria', 'Uma cascata em vez de um modelo só'] },
         { titulo: 'Alface hidropônica (PPGTCA)', img: 'artigos/33800_p78', legenda: 'Leal (2024), UTFPR Medianeira, p. 78', pontos: ['Câmeras fixas nas bancadas', 'Estresse hídrico com delineamento experimental', 'Os tratamentos definem os grupos'] },
-        { titulo: 'O mesmo caminho em todos', pontos: ['Problema do campo → o que precisa ser contado ou localizado', 'Anotar com protocolo → treinar YOLO → ler métricas', 'Testar em campo → achar os erros → voltar aos dados'] },
+        { titulo: 'O mesmo caminho em todos', img: 'esq_fluxo', pontos: ['Problema do campo → o que precisa ser contado ou localizado', 'Anotar com protocolo → treinar YOLO → ler métricas', 'Testar em campo → achar os erros → voltar aos dados'] },
       ],
       teoria: (
         <p>
@@ -420,9 +420,9 @@ print("validação mAP50:", round(val.box.map50, 3), "| teste mAP50:", round(tes
       min: 35,
       tipo: 'leitura',
       slides: [
-        { titulo: 'O projeto', pontos: ['Um problema agrícola real, escolhido pela dupla', 'Dados próprios anotados no CVAT', 'Notebook baseado no do encontro 2'] },
-        { titulo: 'O que entregar', pontos: ['Protocolo de anotação com casos-limite', 'Dataset exportado e conferido', 'Notebook que roda do início ao fim', 'Teste em dados de outro lugar e dez erros analisados', 'Relatório curto e demonstração'] },
-        { titulo: 'Como será avaliado', pontos: ['Dados e anotação: 25%', 'Treino e experimentos: 25%', 'Avaliação em outro lugar e erros: 30%', 'Demonstração e defesa: 20%'] },
+        { titulo: 'O projeto', img: 'cvat/image013_detrac', legenda: 'Tudo começa na anotação', pontos: ['Um problema agrícola real, escolhido pela dupla', 'Dados próprios anotados no CVAT', 'Notebook baseado no do encontro 2'] },
+        { titulo: 'O que entregar', img: 'real_arquivos_ultralytics', pontos: ['Protocolo de anotação com casos-limite', 'Dataset exportado e conferido', 'Notebook que roda do início ao fim', 'Teste em dados de outro lugar e dez erros analisados', 'Relatório curto e demonstração'] },
+        { titulo: 'Como será avaliado', img: 'real_dominio_syrah', legenda: 'O teste em outro lugar pesa mais', pontos: ['Dados e anotação: 25%', 'Treino e experimentos: 25%', 'Avaliação em outro lugar e erros: 30%', 'Demonstração e defesa: 20%'] },
       ],
       teoria: (
         <p>
