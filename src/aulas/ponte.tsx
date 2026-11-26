@@ -75,7 +75,7 @@ export const blocoPonte: Bloco = {
       </Thm>
       <Fig n="aula5_fronteiras_cachos" cap={<>Fronteiras de decisão com dados reais. Erros de treino e de teste calculados pelo script <code>scripts/figuras_reais.py</code>.</>} />
       <Callout kind="pegadinha" title="Observação">
-        <p>As fotos de Syrah do WGISD foram feitas antes da maturação, quando os cachos ainda são verdes. A característica “cor” que parecia óbvia não separa as classes nesse conjunto: o mesmo problema reaparece em detectores treinados numa época do ciclo e usados em outra (Bloco 12).</p>
+        <p>As fotos de Syrah do WGISD foram feitas antes da maturação, quando os cachos ainda são verdes. A característica “cor” que parecia óbvia não separa as classes nesse conjunto: o mesmo problema reaparece em detectores treinados numa época do ciclo e usados em outra (e é exatamente o que o laboratório de mudança de domínio mostra, mais adiante).</p>
       </Callout>
       <h4>O perceptron da Aula 5, em imagens</h4>
       <p>
