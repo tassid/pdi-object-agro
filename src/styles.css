@@ -442,3 +442,13 @@ main.page { counter-reset: fig; }
 .s-grid.wide .s-fig img { object-position: center top; }
 
 .slide, .slide * { hyphens: manual; }
+
+/* encontros */
+.encontro { margin: 64px 0 0; padding: 18px 0 10px; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule); text-align: center; }
+.encontro h2 { font-size: 1.6rem; font-weight: 400; }
+.toc .toc-enc { font-variant: small-caps; letter-spacing: 0.04em; color: var(--brown); margin: 10px 0 2px; font-size: 0.92rem; }
+.roteiro-t { font-size: 0.95rem; margin-bottom: 4px; }
+.roteiro + .roteiro { margin-top: 14px; }
+.tbl-tarefas { max-width: none; font-size: 0.86rem; }
+.tbl-tarefas tbody th { text-align: left; font-weight: 700; white-space: nowrap; padding-right: 14px; }
+.tbl-tarefas td { border-top: 1px solid var(--rule); }

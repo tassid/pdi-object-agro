@@ -16,7 +16,7 @@ export const blocoPonte: Bloco = {
     { titulo: 'Fronteiras: simples, linear, complexa', img: 'aula5_fronteiras_cachos', pontos: ['Subajuste: erro alto no treino e no teste', 'Linear (perceptron): melhor erro de teste', 'Sobreajuste: erro de treino 0%, teste pior', 'Generalizar é o objetivo (Aula 5, slides 35–36)'], notas: 'Os três erros foram calculados com 60% dos cachos para treino e 40% para teste. Destacar que o 1-NN decora o treino.' },
     { titulo: 'Das taxas da Aula 5 às métricas de detecção', tex: String.raw`\text{Confiabilidade}=\frac{N_{rec}}{N_{rec}+N_{err}}\;\longleftrightarrow\;P=\frac{VP}{VP+FP}`, pontos: ['Taxa de reconhecimento ↔ revocação (com rejeição)', 'Confiabilidade ↔ precisão', 'Em detecção, um objeto não encontrado vira FN', 'Uma caixa onde não há objeto vira FP'], notas: 'Ligação explícita com o slide 38 da Aula 5. A rejeição corresponde, em detecção, às previsões abaixo do limiar de confiança.' },
     { titulo: 'O que muda: o objeto não vem recortado', img: 'aula5_recorte_vs_deteccao', pontos: ['Onde está? (localização)', 'O que é? (classe)', 'Quantos são? (contagem)', 'A rede aprende as características a partir de exemplos anotados'] },
-    { titulo: 'Roteiro das duas aulas', pontos: [['Aula 1: dados', ['tarefas, arquiteturas, formatos', 'IoU, NMS, GSD', 'protocolo no CVAT, auditoria e partição']], ['Aula 2: YOLO na prática', ['montar o Colab e treinar na GPU', 'ler resultados, contar, rastrear, exportar', 'testar em outro lugar e trabalhos da UTFPR']]] },
+    { titulo: 'Roteiro dos dois encontros', pontos: [['Encontro 1: das perguntas aos dados', ['classificação × detecção × segmentação', 'formatos, IoU, NMS', 'CVAT, auditoria, partição, Colab']], ['Encontro 2: do treino ao campo', ['treinar e ler um YOLO', 'classificação e segmentação, contar, exportar', 'testar em outro lugar e trabalhos da UTFPR']]] },
   ],
   teoria: (
     <>
@@ -50,14 +50,14 @@ export const blocoPonte: Bloco = {
       </p>
       <MM n="3" t={String.raw`P = \frac{VP}{VP + FP}, \qquad R = \frac{VP}{VP + FN}.`} />
       <p>
-        A rejeição da Aula 5 tem um análogo direto: previsões abaixo do limiar de confiança são descartadas. Aumentar o limiar rejeita mais, eleva a precisão e reduz a revocação. A
-        Seção 1.3 retoma esse compromisso com previsões reais.
+        A rejeição da Aula 5 tem um análogo direto: previsões abaixo do limiar de confiança são descartadas. Aumentar o limiar rejeita mais, eleva a precisão e reduz a revocação. O
+        Bloco 4 retoma esse compromisso com previsões reais.
       </p>
       <h4>O que muda na detecção</h4>
       <p>
         A diferença essencial é o ponto de entrada. O detector recebe a imagem inteira e precisa responder, para cada objeto, onde ele está (uma caixa), o que ele é (uma classe) e com que
         confiança. As características deixam de ser escolhidas pelo projetista e passam a ser aprendidas a partir de exemplos anotados (LECUN; BENGIO; HINTON, 2015). Com isso, o
-        principal custo do projeto se desloca do desenho das características para a <b>obtenção e a qualidade dos rótulos</b>, tema da Seção 1.4.
+        principal custo do projeto se desloca do desenho das características para a <b>obtenção e a qualidade dos rótulos</b>, tema do Bloco 5.
       </p>
     </>
   ),
@@ -76,7 +76,7 @@ export const blocoPonte: Bloco = {
       </Thm>
       <Fig n="aula5_fronteiras_cachos" cap={<>Fronteiras de decisão com dados reais. Erros de treino e de teste calculados pelo script <code>scripts/figuras_reais.py</code>.</>} />
       <Callout kind="pegadinha" title="Observação">
-        <p>As fotos de Syrah do WGISD foram feitas antes da maturação, quando os cachos ainda são verdes. A característica “cor” que parecia óbvia não separa as classes nesse conjunto: o mesmo problema reaparece em detectores treinados numa época do ciclo e usados em outra (Seção 2.5).</p>
+        <p>As fotos de Syrah do WGISD foram feitas antes da maturação, quando os cachos ainda são verdes. A característica “cor” que parecia óbvia não separa as classes nesse conjunto: o mesmo problema reaparece em detectores treinados numa época do ciclo e usados em outra (Bloco 12).</p>
       </Callout>
       <Fig n="aula5_recorte_vs_deteccao" cap={<>À esquerda, a entrada típica da Aula 5: um objeto já recortado. À direita, a entrada de um detector: a foto inteira, com todos os cachos anotados.</>} />
     </>

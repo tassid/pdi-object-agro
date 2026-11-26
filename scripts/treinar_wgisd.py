@@ -96,7 +96,7 @@ def main():
     ap.add_argument("--dados", required=True)
     ap.add_argument("--so", nargs="*", default=["A_pre", "A_scratch", "B_dom"])
     a = ap.parse_args()
-    base = Path(a.dados); R = base / "wgisd"
+    base = Path(a.dados).resolve(); R = base / "wgisd"
     baixar(R); particoes(R); treinar(base, a.so)
 
 

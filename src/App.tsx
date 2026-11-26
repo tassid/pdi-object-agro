@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { ExternalLink } from 'lucide-react'
-import { AulaPage, fig, Fig, Trabalho, useModo } from './curso'
-import { aula1 } from './aulas/Aula1'
-import { aula2 } from './aulas/Aula2'
+import { AulaPage, encontroDe, fig, Fig, Trabalho, useModo } from './curso'
+import { curso } from './aulas/Curso'
 import { T } from './trabalhos'
 
-const AULAS = [aula1, aula2]
+const AULAS = [curso]
 const BASE = import.meta.env.BASE_URL
 
 function useHash() {
@@ -37,8 +36,8 @@ function Inicio() {
           <div className="abstract">
             <h2>Resumo</h2>
             <p>
-              A Aula 5 terminou com um sistema clássico que recebe um objeto já isolado, extrai características e decide a classe por uma fronteira de decisão. Estas duas aulas
-              continuam a partir dali: como encontrar, delimitar e contar <i>vários</i> objetos numa foto de campo, como produzir os rótulos que um detector precisa (CVAT), como treinar e
+              A Aula 5 terminou com um sistema clássico que recebe um objeto já isolado, extrai características e decide a classe por uma fronteira de decisão. Os dois encontros
+              continuam a partir dali: o que muda entre classificar, detectar e segmentar, como encontrar, delimitar e contar <i>vários</i> objetos numa foto de campo, como produzir os rótulos que um detector precisa (CVAT), como treinar e
               avaliar um YOLO com rigor e como saber se o modelo funciona em outra propriedade. Cada bloco segue a ordem <b>teoria → exemplos → prática</b>, tem slides integrados no
               tema da Aula 5 e exercícios com solução. As figuras foram geradas em Python com fotos reais do WGISD (Embrapa) e com <b>treinos reais</b> de YOLO11n feitos para este
               material; os estudos de caso são trabalhos de conclusão e dissertações da UTFPR, com prints das páginas originais.
@@ -47,17 +46,19 @@ function Inicio() {
         </header>
 
         <div className="aula-cards">
-          {AULAS.map((a) => (
-            <a key={a.id} href={`#${a.id}`} className="aula-card">
-              <img src={fig(a.n === 1 ? 'aula5_recorte_vs_deteccao' : 'real_predicoes_teste')} alt="" style={{ border: '1px solid var(--rule)' }} />
-              <h2>Aula {a.n}. {a.titulo}</h2>
-              <p className="meta">300 minutos, com intervalo de 20 · {a.blocos.length} blocos · notebook no Colab</p>
-              <p>{a.ideia}</p>
-              <ol className="mini-blocos">
-                {a.blocos.map((b) => <li key={b.id}><b>{b.cod}</b><span>{b.titulo}</span><small>{b.min}′</small></li>)}
-              </ol>
-            </a>
-          ))}
+          {curso.encontros.map((e) => {
+            const bl = curso.blocos.filter((b) => encontroDe(curso, b.id) === e.n)
+            return (
+              <a key={e.n} href="#curso" className="aula-card">
+                <img src={fig(e.n === 1 ? 'real_tres_tarefas' : 'real_predicoes_teste')} alt="" style={{ border: '1px solid var(--rule)' }} />
+                <h2>Encontro {e.n}: {e.titulo}</h2>
+                <p className="meta">300 minutos, com intervalo de 20 · {bl.length} blocos · notebook no Colab</p>
+                <ol className="mini-blocos">
+                  {bl.map((b) => <li key={b.id}><b>{b.cod}</b><span>{b.titulo}</span><small>{b.min}′</small></li>)}
+                </ol>
+              </a>
+            )
+          })}
         </div>
 
         <section className="sec">
@@ -76,7 +77,7 @@ function Inicio() {
               classe. Essa é a tarefa de <b>detecção de objetos</b>.
             </p>
           </div>
-          <Fig n="aula5_recorte_vs_deteccao" cap={<>Da classificação de um recorte (Aula 5) à detecção na imagem inteira (Aulas 1 e 2). Foto e caixas do WGISD.</>} />
+          <Fig n="aula5_recorte_vs_deteccao" cap={<>Da classificação de um recorte (Aula 5) à detecção na imagem inteira (encontros 1 e 2). Foto e caixas do WGISD.</>} />
         </section>
 
         <section className="sec">
@@ -157,13 +158,13 @@ export default function App() {
           <a href="#inicio" className="brand">Detecção de objetos · CVAT e YOLO</a>
           <nav className="topnav">
             <a href="#inicio" aria-current={i < 0 ? 'page' : undefined}>Início</a>
-            {AULAS.map((a) => <a key={a.id} href={`#${a.id}`} aria-current={h === a.id ? 'page' : undefined}>Aula {a.n}</a>)}
+            <a href="#curso" aria-current={h === 'curso' ? 'page' : undefined}>Curso</a>
             <a href="https://github.com/tassid/pdi-object-agro" target="_blank" rel="noreferrer">GitHub</a>
             {prof && <a className="modo-prof" href={`${BASE}${location.hash}`} title="voltar à visão dos alunos">Professor · ver como aluno</a>}
           </nav>
         </div>
       </header>
-      {i >= 0 ? <AulaPage key={h} aula={AULAS[i]} prev={AULAS[i - 1]} next={AULAS[i + 1]} /> : <Inicio />}
+      {i >= 0 ? <AulaPage key={h} aula={AULAS[i]} /> : <Inicio />}
       <footer className="foot">
         Tassiane Anzolin · PPGTCA / UTFPR Medianeira · fotos: WGISD (Embrapa, CC BY-NC 4.0) e CWFID · capturas do CVAT: documentação oficial · prints de trabalhos: RIUT/UTFPR
       </footer>

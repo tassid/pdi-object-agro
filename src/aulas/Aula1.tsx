@@ -1,4 +1,4 @@
-import type { Aula } from '../curso'
+
 import { Fig, M, MM, Thm, Trabalho } from '../curso'
 import { T } from '../trabalhos'
 import { blocoPonte } from './ponte'
@@ -6,7 +6,7 @@ import { PROF1, comProf } from './prof'
 import { Callout, Caso, Code, Term } from '../ui'
 import { LabConversor, LabGSD, LabIoU, LabNMS, LabSplit } from '../labs'
 
-export const aula1: Aula = comProf(PROF1, {
+export const aula1 = comProf(PROF1, {
   id: 'aula1',
   n: 1,
   titulo: 'Fundamentos de detecção de objetos e engenharia de dados',
@@ -220,8 +220,6 @@ print("ExG médio:", exg.mean().round(3))`} />
           <Fig n="unet_cwfid" cap="Rótulo por pixel do CWFID (cultura e planta daninha), correspondente à saída esperada de uma U-Net." />
           <Fig n="formatos_caixa" cap="Uma caixa do WGISD nas representações xyxy, COCO e YOLO." />
           <Fig n="mascara_poligono" cap="Máscara de instância do WGISD convertida em polígono (cv2.findContours e cv2.approxPolyDP)." />
-          <p>A dissertação abaixo usa no mesmo problema agroindustrial (grãos de soja avariados) uma U-Net para segmentação e uma YOLO V4 para detecção, o que permite comparar as saídas das duas famílias em imagens reais.</p>
-          <Trabalho t={T.soja} />
           <Callout kind="pegadinha">
             <p>No formato YOLO, as coordenadas referem-se ao centro da caixa. A exportação de cantos normalizados sob esse formato não gera erro de execução, mas invalida o treinamento; por isso, a conversão deve ser verificada visualmente antes do treino.</p>
           </Callout>
@@ -284,7 +282,7 @@ names:
             considerada verdadeiro positivo (TP) quando seu IoU com uma anotação ainda não associada é maior ou igual a um limiar; o protocolo do PASCAL VOC adota 0,5 (EVERINGHAM et al., 2010) e o do
             COCO calcula a média em dez limiares, de 0,50 a 0,95 (LIN et al., 2014). Previsões sem correspondência são falsos positivos (FP) e anotações sem correspondência, falsos negativos (FN).
           </p>
-          <Thm k="def" n="2" nome="interseção sobre união">Sejam <M t="A=(x_1^A,y_1^A,x_2^A,y_2^A)" /> e <M t="B" /> duas caixas no formato xyxy. A área de interseção e o IoU são</Thm>
+          <Thm k="def" n="6" nome="interseção sobre união">Sejam <M t="A=(x_1^A,y_1^A,x_2^A,y_2^A)" /> e <M t="B" /> duas caixas no formato xyxy. A área de interseção e o IoU são</Thm>
           <MM n="4" t={String.raw`I=\max\bigl(0,\min(x_2^A,x_2^B)-\max(x_1^A,x_1^B)\bigr)\cdot\max\bigl(0,\min(y_2^A,y_2^B)-\max(y_1^A,y_1^B)\bigr),\qquad \mathrm{IoU}=\frac{I}{|A|+|B|-I}.`} />
           <p>
             Como o IoU é uma razão de áreas, o mesmo erro absoluto de localização produz reduções maiores em objetos pequenos: um deslocamento diagonal de 10 pixels resulta em IoU de 0,82 para um
@@ -401,7 +399,7 @@ for conf in [0.05, 0.25, 0.5]:
           <Fig n="cvat/export_job_as_dataset_dialog" w={520} cap="Exportação do job como conjunto de dados. Em Export format, trocar o padrão (CVAT for images) por Ultralytics YOLO Detection e ligar Save images. Fonte: documentação do CVAT." />
           <h4>Um protocolo real: armadilha McPhail</h4>
           <p>Na dissertação de Medeiros (2025), do PPGTCA, a anotação das moscas-das-frutas exigiu definir antes uma região de interesse na armadilha e um critério para insetos pequenos e parcialmente visíveis. O falso positivo de campo (p. 62) mostra o que acontece quando um caso não previsto no protocolo aparece.</p>
-          <Trabalho t={T.mosca} />
+          <Fig n="artigos/36152_p53" w={640} cap="Imagem original e imagem anotada da armadilha McPhail. Reprodução de Medeiros (2025), PPGTCA, UTFPR Medianeira, p. 53. O trabalho completo é discutido no Bloco 13." />
           <Callout kind="campo"><p>A documentação do WGISD descreve os critérios adotados para cachos distantes e ocluídos. Recomenda-se sua leitura antes da redação do protocolo da dupla (SANTOS et al., 2020).</p></Callout>
         </>
       ),
@@ -500,7 +498,7 @@ def concordancia(A, B, lim=0.5):
           <ol>
             <li>Anotar 20 imagens no CVAT segundo o protocolo da turma (25 min), com revisão cruzada por outra dupla no modo de revisão (10 min).</li>
             <li>Executar a auditoria sobre o arquivo exportado e corrigir as inconsistências encontradas.</li>
-            <li>Calcular as estatísticas descritivas e justificar a resolução de entrada a ser usada na Aula 2.</li>
+            <li>Calcular as estatísticas descritivas e justificar a resolução de entrada a ser usada no encontro 2.</li>
             <li>Particionar o conjunto por grupo e verificar, por código, que nenhum grupo ocorre em mais de um conjunto.</li>
           </ol>
           <Code code={`import glob, os

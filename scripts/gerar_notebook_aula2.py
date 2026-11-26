@@ -16,19 +16,20 @@ def py(t):
 md("""
 # Aula 2 · YOLO na prática
 
-Notebook da Aula 2 do guia **Detecção de objetos com CVAT e YOLO** (github.com/tassid/pdi-object-agro).
+Notebook do encontro 2 do guia **Detecção de objetos com CVAT e YOLO** (github.com/tassid/pdi-object-agro). As seções 1 e 2 são montadas no fim do encontro 1 (Bloco 7).
 
-Cada seção corresponde a um bloco da aula. Execute de cima para baixo.
+Cada seção corresponde a um bloco do guia. Execute de cima para baixo.
 
 | Seção | Bloco |
 |---|---|
-| 1. Ambiente | 2.1 Montar o Colab |
-| 2. Dados (WGISD ou o export do CVAT da dupla) | 2.1 |
-| 3. Treinar | 2.2 |
-| 4. Ler os resultados | 2.3 |
-| 5. Usar o modelo: contar, salvar, vídeo, exportar | 2.4 |
-| 6. Testar em outro lugar e analisar erros | 2.5 |
-| 7. Registro do experimento | 2.7 |
+| 1. Ambiente | 7 Montar o Colab |
+| 2. Dados (WGISD ou o export do CVAT da dupla) | 7 |
+| 3. Treinar (detecção) | 8 |
+| 4. Ler os resultados | 9 |
+| 5. Usar o modelo: contar, salvar, vídeo, exportar | 11 |
+| 6. Testar em outro lugar e analisar erros | 12 |
+| 7. Registro do experimento | 14 |
+| 8. Classificação e segmentação | 10 |
 
 Antes de começar: **Ambiente de execução → Alterar o tipo de ambiente → GPU (T4)**.
 """)
@@ -267,6 +268,79 @@ registro = {"pesos_iniciais": "yolo11n.pt", "epocas": EPOCAS, "imgsz": 640, "bat
 json.dump(registro, open(f"{PASTA}/registro.json", "w"), indent=1, default=float)
 registro
 """)
+md("""
+## 8. Classificação e segmentação
+
+A mesma biblioteca resolve as outras tarefas trocando os pesos:
+
+| tarefa | pesos | dados | saída do `predict` |
+|---|---|---|---|
+| classificação | `yolo11n-cls.pt` | pasta com uma subpasta por classe | `r.probs` |
+| detecção | `yolo11n.pt` | `data.yaml` com caixas | `r.boxes` |
+| segmentação de instâncias | `yolo11n-seg.pt` | `data.yaml` com polígonos | `r.masks` |
+
+### Classificação: cada caixa anotada vira um recorte
+
+A variedade está nas três primeiras letras do nome da foto. Os recortes de uma foto vão todos para o mesmo conjunto (o da foto), para não haver vazamento. A Syrah fica de fora porque, neste notebook, ela está reservada para o teste da detecção.
+""")
+py("""
+import cv2
+VAR = {"CDY": "chardonnay", "CFR": "cabernet_franc", "CSV": "cabernet_sauvignon", "SVB": "sauvignon_blanc"}
+REC = "/content/recortes" if os.path.exists("/content") else os.path.abspath("recortes")
+shutil.rmtree(REC, ignore_errors=True)
+for split in ["train", "val"]:
+    for f in glob.glob(f"{raiz}/images/{split}/*.jpg"):
+        nome = os.path.basename(f)[:-4]
+        if nome[:3] not in VAR:
+            continue
+        im = cv2.imread(f); H, W = im.shape[:2]
+        pasta = f"{REC}/{split}/{VAR[nome[:3]]}"; os.makedirs(pasta, exist_ok=True)
+        for k, l in enumerate(open(f.replace("images", "labels")[:-4] + ".txt")):
+            _, xc, yc, w, h = map(float, l.split())
+            x1, y1, x2, y2 = int((xc - w/2) * W), int((yc - h/2) * H), int((xc + w/2) * W), int((yc + h/2) * H)
+            if x2 - x1 > 16 and y2 - y1 > 16:
+                cv2.imwrite(f"{pasta}/{nome}_{k}.jpg", im[max(0, y1):y2, max(0, x1):x2])
+for split in ["train", "val"]:
+    print(split, {c: len(os.listdir(f"{REC}/{split}/{c}")) for c in sorted(os.listdir(f"{REC}/{split}"))})
+""")
+py("""
+classificador = YOLO("yolo11n-cls.pt")
+classificador.train(data=REC, epochs=15, imgsz=224, batch=64, seed=0, project=f"{BASE}/runs", name="cls", exist_ok=True)
+res_cls = YOLO(f"{BASE}/runs/cls/weights/best.pt").val(data=REC, split="val", verbose=False)
+print(f"acerto top-1: {res_cls.top1:.3f} | top-5: {res_cls.top5:.3f}")
+display(Mostrar(f"{BASE}/runs/cls/confusion_matrix_normalized.png", width=600))
+""")
+md("""
+### Segmentação de instâncias (opcional, cerca de 15 min numa T4)
+
+O WGISD tem máscaras de instância para 137 fotos (`*.npz`). A célula converte cada máscara num polígono no formato do YOLO e treina o `yolo11n-seg.pt`. Para a dupla, o equivalente é anotar com **polígonos** no CVAT e exportar em *Ultralytics YOLO Segmentation*.
+""")
+py("""
+TREINAR_SEG = False
+if TREINAR_SEG:
+    SEG = "/content/dataset_seg" if os.path.exists("/content") else os.path.abspath("dataset_seg")
+    lista = {"train": [l.strip() for l in open("wgisd/train_masked.txt") if l.strip()],
+             "val": [l.strip() for l in open("wgisd/test_masked.txt") if l.strip()]}
+    for split, nomes in lista.items():
+        for sub in ("images", "labels"):
+            os.makedirs(f"{SEG}/{sub}/{split}", exist_ok=True)
+        for n in nomes:
+            m = np.load(f"wgisd/data/{n}.npz")["arr_0"]; H, W = m.shape[:2]; linhas = []
+            for i in range(m.shape[2]):
+                cs, _ = cv2.findContours(m[:, :, i].astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                if cs:
+                    c = cv2.approxPolyDP(max(cs, key=cv2.contourArea), 1.5, True).reshape(-1, 2)
+                    if len(c) >= 3:
+                        linhas.append("0 " + " ".join(f"{x/W:.5f} {y/H:.5f}" for x, y in c))
+            shutil.copy(f"wgisd/data/{n}.jpg", f"{SEG}/images/{split}/{n}.jpg")
+            open(f"{SEG}/labels/{split}/{n}.txt", "w").write("\\n".join(linhas) + "\\n")
+    yaml.safe_dump({"path": SEG, "train": "images/train", "val": "images/val", "names": {0: "cacho"}}, open(f"{SEG}/data.yaml", "w"))
+    seg = YOLO("yolo11n-seg.pt")
+    seg.train(data=f"{SEG}/data.yaml", epochs=40, imgsz=1024, batch=8, seed=0, project=f"{BASE}/runs", name="seg", exist_ok=True)
+    r = YOLO(f"{BASE}/runs/seg/weights/best.pt").predict(f"{SEG}/images/val/" + lista["val"][0] + ".jpg", conf=0.25)[0]
+    display(Mostrar(data=cv2.imencode(".jpg", r.plot())[1].tobytes(), width=800))
+""")
+
 md("""
 ## Para a dupla
 

@@ -4,7 +4,13 @@ import type { Aula, Prof } from '../curso'
 
 type ProfAula = { blocos: Record<string, Prof>; aula: Aula['prof'] }
 
-export function comProf(p: ProfAula, a: Omit<Aula, 'prof'>): Aula {
+/** parte de uma aula antiga (cada encontro), usada para compor o curso único em Curso.tsx */
+export type Parte = Omit<Aula, 'prof' | 'encontros' | 'intervalos' | 'notebooks'> & {
+  intervaloDepois: string
+  notebook: { nome: string; arquivo: string; descricao: string }
+}
+
+export function comProf(p: ProfAula, a: Parte): Parte & { prof: Aula['prof'] } {
   return { ...a, prof: p.aula, blocos: a.blocos.map((b) => ({ ...b, prof: p.blocos[b.id] ?? b.prof })) }
 }
 
@@ -13,9 +19,9 @@ export const PROF1: ProfAula = {
     preparo: [
       'Criar no CVAT (app.cvat.ai ou instância do laboratório) um projeto com a classe “cacho” e uma tarefa com 20 imagens do WGISD por dupla; gerar os convites com antecedência.',
       'Testar o notebook Aula1_Anotacao_Auditoria_Split.ipynb no Colab da sala, com a versão do Ultralytics que será usada (este material foi testado com 8.3.224).',
-      'Separar três imagens ambíguas (cachos contíguos, ocluídos e cortados) para a anotação sem protocolo do Bloco 1.4.',
-      'Imprimir ou projetar a ficha de leitura crítica do Bloco 1.6 e abrir os PDFs dos trabalhos da UTFPR (RIUT bloqueia downloads automatizados; abrir pelo navegador).',
-      'Levar o PPT da Aula 5 aberto nos slides 17, 27, 35 e 38 para a retomada do Bloco 1.0.',
+      'Separar três imagens ambíguas (cachos contíguos, ocluídos e cortados) para a anotação sem protocolo do Bloco 5.',
+      'Imprimir ou projetar a ficha de leitura crítica do Bloco 13 e abrir os PDFs dos trabalhos da UTFPR (RIUT bloqueia downloads automatizados; abrir pelo navegador).',
+      'Levar o PPT da Aula 5 aberto nos slides 17, 27, 35 e 38 para a retomada do Bloco 1.',
     ],
     planoB: [
       'Sem internet: as capturas do CVAT e os prints dos trabalhos já estão no site; a anotação pode ser feita em papel sobre as imagens impressas e as caixas medidas com régua (conversão para YOLO no quadro).',
@@ -96,10 +102,10 @@ export const PROF2: ProfAula = {
   aula: {
     preparo: [
       'Conferir no Colab da sala: GPU T4 disponível, ultralytics instalado e pesos yolo11n.pt baixados (ou levar o arquivo em pendrive).',
-      'Deixar o conjunto da Aula 1 de cada dupla no Google Drive, já auditado; manter o WGISD original como alternativa.',
-      'Disparar o treino no fim do Bloco 2.2, antes do intervalo; com 40 épocas e imgsz 640 leva cerca de 15 min numa T4.',
+      'Deixar o conjunto do encontro 1 de cada dupla no Google Drive, já auditado; manter o WGISD original como alternativa.',
+      'Disparar o treino no fim do Bloco 8, antes do intervalo; com 40 épocas e imgsz 640 leva cerca de 15 min numa T4.',
       'Rodar uma vez o notebook Aula2_YOLO_na_pratica.ipynb inteiro na conta da sala, para baixar o WGISD e os pesos com antecedência.',
-      'Imprimir a ficha do Bloco 2.6 e abrir os PDFs da mosca-das-frutas, soja, alface e espécies florestais (RIUT).',
+      'Imprimir a ficha do Bloco 13 e abrir os PDFs da mosca-das-frutas, soja, alface e espécies florestais (RIUT).',
     ],
     planoB: [
       'Sem GPU: treinar com imgsz 416, 10 épocas e fração do conjunto (fraction=0.3) na CPU, ou usar os resultados reais deste site como material de análise.',
@@ -176,5 +182,28 @@ export const PROF2: ProfAula = {
         ['15–35 min', 'Cada dupla define problema, fotos, classes e de onde virá o teste em outro lugar; registrar numa tabela da turma.'],
       ],
     },
+  },
+}
+
+/** roteiro dos blocos novos sobre as tarefas */
+export const PROF_TAREFAS: Record<string, Prof> = {
+  bT1: {
+    roteiro: [
+      ['0–8 min', 'Mostrar a foto do vinhedo e fazer as quatro perguntas (o que é, onde e quantos, que pixels, que pixels de cada objeto) antes de dar os nomes.'],
+      ['8–25 min', 'Percorrer o Quadro 1 linha a linha: saída, se conta, se mede área, ferramenta do CVAT, formato de exportação, pesos do YOLO, métrica.'],
+      ['25–35 min', 'Três modelos reais na mesma foto e a tabela de resultados; insistir que as métricas não se comparam entre tarefas.'],
+      ['35–42 min', 'CVAT por tarefa: tag, retângulo, polígono. Trabalhos da soja (cascata) e das espécies florestais (instâncias).'],
+      ['42–50 min', 'Duplas classificam os problemas dos exercícios em tarefa, ferramenta e pesos.'],
+    ],
+    perguntas: ['O salmão e o robalo da Aula 5 eram classificação ou detecção? E se viessem vários peixes na mesma foto?', 'Para estimar produção por planta, qual tarefa é suficiente?', 'Por que segmentação de instâncias custa mais caro para anotar?'],
+    erros: ['Usar segmentação quando a pergunta é só contar (anotação muito mais cara sem ganho).', 'Achar que o acerto da classificação e o mAP da detecção são comparáveis.', 'Confundir segmentação semântica (área por classe) com instâncias (objeto por objeto).'],
+  },
+  bT2: {
+    roteiro: [
+      ['0–8 min', 'Tabela do que muda no código entre as tarefas (pesos, data, saída do predict, métrica).'],
+      ['8–15 min', 'Resultados reais: matriz de confusão das variedades e máscaras previstas.'],
+      ['15–35 min', 'Seção 8 do notebook: gerar recortes das caixas e treinar o classificador (15 épocas, poucos minutos numa T4). Segmentação como tarefa opcional.'],
+    ],
+    erros: ['Sortear recortes sem respeitar a foto de origem (vazamento).', 'Passar o data.yaml de detecção para o modelo -seg (rótulos sem polígonos).'],
   },
 }

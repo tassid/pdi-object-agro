@@ -1,4 +1,4 @@
-import type { Aula } from '../curso'
+
 import { Fig, Trabalho } from '../curso'
 import { Callout, Code } from '../ui'
 import { T } from '../trabalhos'
@@ -9,12 +9,12 @@ const d2 = (v: number) => v.toFixed(2).replace('.', ',')
 const pct = (v: number) => `${(100 * v).toFixed(0)}%`
 const NB = 'Aula2_YOLO_na_pratica.ipynb'
 
-export const aula2: Aula = comProf(PROF2, {
+export const aula2 = comProf(PROF2, {
   id: 'aula2',
   n: 2,
   titulo: 'YOLO na prática: do Colab ao campo',
   ideia:
-    'Uma aula inteira de mão na massa. Cada dupla monta o próprio Colab do zero, treina um YOLO com os dados anotados na Aula 1, aprende a ler os arquivos que o treino gera, usa o modelo para contar objetos em fotos e vídeos, testa o modelo num lugar que ele nunca viu e compara o que fez com trabalhos reais da UTFPR que seguiram o mesmo caminho.',
+    'Uma aula inteira de mão na massa. Cada dupla monta o próprio Colab do zero, treina um YOLO com os dados anotados no encontro 1, aprende a ler os arquivos que o treino gera, usa o modelo para contar objetos em fotos e vídeos, testa o modelo num lugar que ele nunca viu e compara o que fez com trabalhos reais da UTFPR que seguiram o mesmo caminho.',
   chips: ['Google Colab', 'GPU', 'Ultralytics YOLO', 'data.yaml', 'treino', 'results.png', 'mAP', 'limiar de confiança', 'contagem', 'rastreamento', 'exportação', 'mudança de domínio', 'análise de erros', 'trabalhos da UTFPR'],
   objetivos: [
     'Montar um notebook do Colab do zero: GPU, Google Drive, instalação do Ultralytics e organização das pastas e do data.yaml.',
@@ -276,8 +276,7 @@ print(f"precisão {val.box.mp:.2f} · revocação {val.box.mr:.2f} · mAP50 {val
         <>
           <Fig n="real_contagem" cap={`Contagem real por foto no teste (conf 0,25): à esquerda, detectados contra anotados; à direita, a distribuição do erro. Erro médio de ${d2(R.EAM)} cachos por foto.`} />
           <Fig n="rastreamento_ids" cap="Ilustração do rastreamento: uma câmera percorrendo uma foto do WGISD; cada cacho mantém o mesmo número de identificação entre os quadros." />
-          <p>O TCC abaixo aplicou exatamente este fluxo para contar gado em fotos de drone, e documenta o problema das caixas duplicadas em animais agrupados:</p>
-          <Trabalho t={T.gado} />
+          <Fig n="artigos/41807_p22" w={640} cap="Contagem de gado com YOLOv8 em fotos de drone. Reprodução de Mascaro Junior (2025), UTFPR Cornélio Procópio, p. 22. O trabalho completo está no Bloco 4." />
         </>
       ),
       pratica: (
@@ -330,7 +329,7 @@ print(len(YOLO(caminho).predict("foto.jpg")[0].boxes), "caixas no modelo exporta
           </p>
           <p>
             Depois do número, vem a análise de erros: olhar foto por foto e dar uma causa para cada erro. É comum descobrir que parte dos “falsos positivos” são cachos que ninguém anotou,
-            o que é um problema do protocolo da Aula 1, e não do modelo.
+            o que é um problema do protocolo de anotação (Bloco 5), e não do modelo.
           </p>
         </>
       ),
@@ -381,19 +380,19 @@ print("validação mAP50:", round(val.box.map50, 3), "| teste mAP50:", round(tes
       exemplo: (
         <>
           <Trabalho t={T.mosca} />
-          <Trabalho t={T.soja} />
           <Trabalho t={T.alface} />
-          <Trabalho t={T.florestais} />
+          <Trabalho t={T.espelho} />
+          <p>A soja (detecção e classificação em cascata) e as espécies florestais (segmentação de instâncias) estão no Bloco 2.</p>
         </>
       ),
       pratica: (
         <>
-          <p><b>Em duplas (20 min).</b> Escolher um dos trabalhos e preencher a ficha abaixo, com a página de onde tirou cada informação.</p>
+          <p><b>Em duplas (20 min).</b> Escolher um dos trabalhos (deste bloco ou do Bloco 2) e preencher a ficha abaixo, com a página de onde tirou cada informação.</p>
           <table className="tbl">
             <thead><tr><th>etapa</th><th>no trabalho</th><th>no nosso notebook</th></tr></thead>
             <tbody>
               <tr><td>dados: quantas imagens, de onde, de quando</td><td /><td>WGISD ou CVAT da dupla</td></tr>
-              <tr><td>anotação: ferramenta e regras</td><td /><td>CVAT e protocolo da Aula 1</td></tr>
+              <tr><td>anotação: ferramenta e regras</td><td /><td>CVAT e protocolo do encontro 1</td></tr>
               <tr><td>divisão treino / validação / teste</td><td /><td>Syrah separada no teste</td></tr>
               <tr><td>modelo e tamanho de imagem</td><td /><td>yolo11n, 640</td></tr>
               <tr><td>métrica relatada e em que conjunto</td><td /><td>mAP50 e erro de contagem</td></tr>
@@ -411,14 +410,14 @@ print("validação mAP50:", round(val.box.map50, 3), "| teste mAP50:", round(tes
       min: 35,
       tipo: 'leitura',
       slides: [
-        { titulo: 'O projeto', pontos: ['Um problema agrícola real, escolhido pela dupla', 'Dados próprios anotados no CVAT', 'Notebook baseado no desta aula'] },
+        { titulo: 'O projeto', pontos: ['Um problema agrícola real, escolhido pela dupla', 'Dados próprios anotados no CVAT', 'Notebook baseado no do encontro 2'] },
         { titulo: 'O que entregar', pontos: ['Protocolo de anotação com casos-limite', 'Dataset exportado e conferido', 'Notebook que roda do início ao fim', 'Teste em dados de outro lugar e dez erros analisados', 'Relatório curto e demonstração'] },
         { titulo: 'Como será avaliado', pontos: ['Dados e anotação: 25%', 'Treino e experimentos: 25%', 'Avaliação em outro lugar e erros: 30%', 'Demonstração e defesa: 20%'] },
       ],
       teoria: (
         <p>
-          O projeto final repete, com um problema escolhido pela dupla, o caminho das duas aulas: anotar no CVAT com protocolo, treinar no Colab, ler os resultados, testar em dados de
-          outro lugar e analisar os erros. O notebook desta aula é o ponto de partida; basta trocar a seção de dados para o export do CVAT da dupla.
+          O projeto final repete, com um problema escolhido pela dupla, o caminho dos dois encontros: anotar no CVAT com protocolo, treinar no Colab, ler os resultados, testar em dados de
+          outro lugar e analisar os erros. O notebook do encontro 2 é o ponto de partida; basta trocar a seção de dados para o export do CVAT da dupla.
         </p>
       ),
       exemplo: (
@@ -455,7 +454,7 @@ print("validação mAP50:", round(val.box.map50, 3), "| teste mAP50:", round(tes
     <><b>Leitura dos resultados</b>: results.png comentado, precisão, revocação, mAP50 e erro de contagem na validação, e o limiar escolhido com justificativa.</>,
     <><b>Teste em outro lugar</b>: fotos de outra origem, nunca usadas no treino, e a comparação com a validação.</>,
     <><b>Dez erros analisados</b>, com recorte da foto e causa provável.</>,
-    <><b>Ficha de um trabalho da UTFPR</b> (Bloco 2.6) e demonstração do modelo em fotos ou vídeo.</>,
+    <><b>Ficha de um trabalho da UTFPR</b> (Bloco 13) e demonstração do modelo em fotos ou vídeo.</>,
   ],
   limitacoes: [
     <>Os números e as figuras de resultados vêm de treinos reais do YOLO11n no WGISD (Ultralytics 8.3.224, uma execução por configuração, semente 0). Outras versões, GPUs ou sementes dão números próximos, mas não idênticos.</>,

@@ -78,7 +78,7 @@ export const T: Record<string, TrabalhoSpec> = {
     resumo: (
       <p>
         Imagens de um DJI Mini 2 anotadas no Roboflow com uma única classe; YOLOv8 treinado e avaliado por mAP50, precisão e revocação. O resumo informa “mAP50 de 93.7%” e discute
-        limitações de diversidade do conjunto. A figura de excesso de contagem é um exemplo real do papel do NMS e do limiar de confiança (Bloco 1.3).
+        limitações de diversidade do conjunto. A figura de excesso de contagem é um exemplo real do papel do NMS e do limiar de confiança (Bloco 4).
       </p>
     ),
     discutir: [
@@ -104,7 +104,7 @@ export const T: Record<string, TrabalhoSpec> = {
     resumo: (
       <p>
         Protótipo com Raspberry Pi Zero 2 W e CNN para separar daninha de cultura, com dados públicos e coleta própria e validação em campo. Traz a curva F1 × confiança gerada pelo
-        Ultralytics, a mesma que a turma obtém no Bloco 2.4, e um falso positivo real de campo.
+        Ultralytics, a mesma que a turma obtém no Bloco 9, e um falso positivo real de campo.
       </p>
     ),
     discutir: [
@@ -209,7 +209,7 @@ export const T: Record<string, TrabalhoSpec> = {
     orientacao: 'Fabrício Martins Lopes',
     pdf: pdf('41804', 'identificacaoesporophakopsora.pdf'),
     prints: [{ p: 'p41', cap: 'Amostra de teste e resultado da detecção do YOLOv3.' }],
-    resumo: <p>Detecção precoce da ferrugem asiática da soja pela contagem de esporos em lâminas, comparando versões do YOLO. Exemplo extremo de objetos pequenos (Bloco 2.3).</p>,
+    resumo: <p>Detecção precoce da ferrugem asiática da soja pela contagem de esporos em lâminas, comparando versões do YOLO. Exemplo extremo de objetos pequenos (Bloco 8).</p>,
     discutir: ['Por que objetos minúsculos exigem maior resolução de entrada ou fatiamento (SAHI)?'],
   },
   esporos: {

@@ -64,11 +64,12 @@ export type Aula = {
   ideia: string
   chips: string[]
   objetivos: string[]
-  intervaloDepois: string
+  encontros: { n: number; titulo: string; inicio: string }[] // bloco em que cada encontro começa
+  intervalos: string[] // blocos depois dos quais há intervalo de 20 min
   blocos: Bloco[]
   quiz: Q[]
   artigos: Artigo[]
-  notebook: { nome: string; arquivo: string; descricao: string }
+  notebooks: { nome: string; arquivo: string; descricao: string }[]
   entregas: React.ReactNode[]
   limitacoes: React.ReactNode[]
   referencias: string[]
@@ -324,20 +325,30 @@ function SlideConteudo({ s, n, rodape, secao }: { s: SlideSpec; n: number; rodap
   )
 }
 
+/** número do encontro a que o bloco pertence */
+export function encontroDe(aula: Aula, id: string) {
+  const idx = aula.blocos.findIndex((b) => b.id === id)
+  let n = 1
+  aula.encontros.forEach((e) => { if (aula.blocos.findIndex((b) => b.id === e.inicio) <= idx) n = e.n })
+  return n
+}
+
 const notasDe = (d: DeckSlide) => (d.kind === 'conteudo' ? d.s.notas : d.notas)
 
 export function buildDeck(aula: Aula): { slides: DeckSlide[]; inicio: Record<string, number> } {
   const slides: DeckSlide[] = []
   const inicio: Record<string, number> = {}
-  slides.push({ kind: 'capa', titulo: aula.titulo, sub: `Aula ${aula.n} de 2 · 5 horas · continuação da Aula 5 (Reconhecimento de Padrões)`, rodape: 'Processamento de Imagens Aplicado à Agroindústria', notas: 'Abrir com a pergunta que fecha a Aula 5: como passar de classificar um objeto isolado para encontrar e contar vários objetos numa imagem de campo?' })
+  slides.push({ kind: 'capa', titulo: aula.titulo, sub: `2 encontros de 5 horas · continuação da Aula 5 (Reconhecimento de Padrões)`, rodape: 'Processamento de Imagens Aplicado à Agroindústria', notas: 'Abrir com a pergunta que fecha a Aula 5: como passar de classificar um objeto isolado para encontrar e contar vários objetos numa imagem de campo?' })
   const partes = <T,>(xs: T[], n: number) => { const k = Math.ceil(xs.length / n); const t = Math.ceil(xs.length / k); return Array.from({ length: k }, (_, i) => xs.slice(i * t, (i + 1) * t)) }
   partes(aula.objetivos, 4).forEach((g, i, all) =>
     slides.push({ kind: 'conteudo', s: { titulo: all.length > 1 ? `Objetivos (${i + 1}/${all.length})` : 'Objetivos', pontos: g.map((o) => o.replace(/\.$/, '')), notas: 'Ler os objetivos em voz alta e indicar em qual bloco cada um é avaliado.' } }))
   aula.blocos.forEach((b) => {
+    const enc = aula.encontros.find((e) => e.inicio === b.id)
+    if (enc) slides.push({ kind: 'secao', kicker: `Encontro ${enc.n} de ${aula.encontros.length} · 300 min`, titulo: enc.titulo, sub: 'Processamento de Imagens Aplicado à Agroindústria' })
     inicio[b.id] = slides.length
     slides.push({ kind: 'secao', kicker: `Bloco ${b.cod} · ${b.min} min`, titulo: b.titulo, sub: 'teoria → exemplos → prática', notas: b.prof?.roteiro.map((r) => `${r[0]}: ${r[1]}`).join(' · ') })
     b.slides.forEach((s) => slides.push({ kind: 'conteudo', s, secao: `${b.cod} ${b.titulo}` }))
-    if (b.id === aula.intervaloDepois) slides.push({ kind: 'secao', kicker: 'Intervalo', titulo: '20 minutos', sub: aula.n === 2 ? 'O treinamento continua em execução na GPU.' : 'Conferir se todos têm acesso ao CVAT e ao Colab.' })
+    if (aula.intervalos.includes(b.id)) slides.push({ kind: 'secao', kicker: 'Intervalo', titulo: '20 minutos', sub: encontroDe(aula, b.id) === 2 ? 'O treinamento continua em execução na GPU.' : 'Conferir se todos têm acesso ao CVAT e ao Colab.' })
   })
   partes(aula.artigos, 6).forEach((g, i, all) =>
     slides.push({ kind: 'conteudo', s: { titulo: all.length > 1 ? `Leituras (${i + 1}/${all.length})` : 'Leituras', pontos: g.map((a) => <><b>{a.tag}</b>: {a.ref.length > 120 ? a.ref.slice(0, 118) + '…' : a.ref}</>) } }))
@@ -410,7 +421,7 @@ export function SlideDeck({ aula, start = 0, onClose }: { aula: Aula; start?: nu
   const [cur, setCur] = useState(start)
   const [presenter, setPresenter] = useState(prof)
   const relogio = useRelogio()
-  const rodape = `Aula ${aula.n} · ${aula.titulo}`
+  const rodape = aula.titulo
   const prev = () => setCur((c) => Math.max(0, c - 1))
   const next = () => setCur((c) => Math.min(slides.length - 1, c + 1))
   const full = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())
@@ -482,20 +493,27 @@ function ProfBloco({ b }: { b: Bloco }) {
 const COR = { conceito: '#ebddc3', lab: '#94b6d2', leitura: '#f0c4a4', pausa: 'repeating-linear-gradient(45deg,#fff 0 5px,#ddd 5px 10px)' }
 const hm = (m: number) => `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`
 
-function itensDo(aula: Aula) {
-  const itens: { t: string; cod: string; min: number; tipo: keyof typeof COR; id?: string; ini: number }[] = []
+type Item = { t: string; cod: string; min: number; tipo: keyof typeof COR; id?: string; ini: number }
+
+function itensDo(aula: Aula, enc: number) {
+  const itens: Item[] = []
   let t0 = 0
-  aula.blocos.forEach((b) => {
+  aula.blocos.filter((b) => encontroDe(aula, b.id) === enc).forEach((b) => {
     itens.push({ t: b.titulo, cod: b.cod, min: b.min, tipo: b.tipo, id: b.id, ini: t0 }); t0 += b.min
-    if (b.id === aula.intervaloDepois) { itens.push({ t: 'Intervalo', cod: '—', min: 20, tipo: 'pausa', ini: t0 }); t0 += 20 }
+    if (aula.intervalos.includes(b.id)) { itens.push({ t: 'Intervalo', cod: '—', min: 20, tipo: 'pausa', ini: t0 }); t0 += 20 }
   })
   return { itens, total: t0 }
 }
 
 function Roteiro({ aula }: { aula: Aula }) {
-  const { itens, total } = itensDo(aula)
+  return <>{aula.encontros.map((e) => <RoteiroEnc key={e.n} aula={aula} enc={e.n} titulo={e.titulo} />)}</>
+}
+
+function RoteiroEnc({ aula, enc, titulo }: { aula: Aula; enc: number; titulo: string }) {
+  const { itens, total } = itensDo(aula, enc)
   return (
     <div className="roteiro">
+      <p className="roteiro-t"><b>Encontro {enc}.</b> {titulo}</p>
       <div className="roteiro-bar">
         {itens.map((s, i) => (
           <a key={i} href={s.id ? `#${s.id}` : undefined} style={{ flex: s.min, background: COR[s.tipo] }} title={`${hm(s.ini)}–${hm(s.ini + s.min)} · ${s.t}`}
@@ -516,27 +534,12 @@ function Roteiro({ aula }: { aula: Aula }) {
 }
 
 function PlanoDocente({ aula }: { aula: Aula }) {
-  const { itens } = itensDo(aula)
   return (
     <section className="sec" id="plano">
       <div className="sec-head"><span className="n">0</span><h2>Plano docente</h2><span className="min">visível só em /professor</span></div>
       <div className="prof-box" style={{ maxWidth: 'none' }}>
-        <h4>Cronograma</h4>
-        <table className="tbl">
-          <thead><tr><th>início</th><th>duração</th><th>bloco</th><th>conteúdo e estratégia</th></tr></thead>
-          <tbody>
-            {itens.map((s, i) => {
-              const b = aula.blocos.find((x) => x.id === s.id)
-              return (
-                <tr key={i}>
-                  <td>{hm(s.ini)}</td><td>{s.min} min</td><td>{s.cod}</td>
-                  <td>{s.t}{b?.prof ? `. ${b.prof.roteiro.map((r) => r[1].split('.')[0]).slice(0, 3).join('; ')}.` : s.tipo === 'pausa' ? (aula.n === 2 ? '. O treino segue na GPU.' : '. Checagem dos acessos ao CVAT e ao Colab.') : ''}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        <h5>Preparação antes da aula</h5>
+        {aula.encontros.map((e) => <TabelaEnc key={e.n} aula={aula} enc={e.n} titulo={e.titulo} />)}
+        <h5>Preparação antes dos encontros</h5>
         <ol>{aula.prof.preparo.map((p, i) => <li key={i}>{p}</li>)}</ol>
         <h5>Plano B (sem GPU, sem internet ou com CVAT fora do ar)</h5>
         <ul>{aula.prof.planoB.map((p, i) => <li key={i}>{p}</li>)}</ul>
@@ -546,15 +549,38 @@ function PlanoDocente({ aula }: { aula: Aula }) {
   )
 }
 
+function TabelaEnc({ aula, enc, titulo }: { aula: Aula; enc: number; titulo: string }) {
+  const { itens } = itensDo(aula, enc)
+  return (
+      <>
+        <h4>Encontro {enc}: {titulo}</h4>
+        <table className="tbl">
+          <thead><tr><th>início</th><th>duração</th><th>bloco</th><th>conteúdo e estratégia</th></tr></thead>
+          <tbody>
+            {itens.map((s, i) => {
+              const b = aula.blocos.find((x) => x.id === s.id)
+              return (
+                <tr key={i}>
+                  <td>{hm(s.ini)}</td><td>{s.min} min</td><td>{s.cod}</td>
+                  <td>{s.t}{b?.prof ? `. ${b.prof.roteiro.map((r) => r[1].split('.')[0]).slice(0, 3).join('; ')}.` : s.tipo === 'pausa' ? (enc === 2 ? '. O treino segue na GPU.' : '. Checagem dos acessos ao CVAT e ao Colab.') : ''}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </>
+  )
+}
+
 /* =====================================================================
    página da aula
    ===================================================================== */
 
-export function AulaPage({ aula, prev, next }: { aula: Aula; prev?: Aula; next?: Aula }) {
+export function AulaPage({ aula }: { aula: Aula }) {
   const prof = useModo() === 'professor'
   const [deck, setDeck] = useState<number | null>(null)
   const { slides, inicio } = useMemo(() => buildDeck(aula), [aula])
-  const rodape = `Aula ${aula.n} · ${aula.titulo}`
+  const rodape = aula.titulo
   const extras: [string, string][] = [['artigos', 'Leituras'], ['quiz', 'Avaliação formativa'], ['entregas', 'Atividade avaliativa'], ['limitacoes', 'Pressupostos e limitações'], ['referencias', 'Referências']]
   const ids = [...(prof ? ['plano'] : []), 'slides', ...aula.blocos.map((b) => b.id), ...extras.map((e) => e[0])]
   const [on, setOn] = useState(ids[0])
@@ -571,18 +597,20 @@ export function AulaPage({ aula, prev, next }: { aula: Aula; prev?: Aula; next?:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aula.id, prof])
   const go = (id: string) => (e: React.MouseEvent) => { e.preventDefault(); document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }) }
-  const nb = `https://colab.research.google.com/github/tassid/pdi-object-agro/blob/main/notebooks/${aula.notebook.arquivo}`
-  const nExtra = Number(aula.blocos[aula.blocos.length - 1].cod.split('.')[1]) + 1
+  const nbUrl = (a: string) => `https://colab.research.google.com/github/tassid/pdi-object-agro/blob/main/notebooks/${a}`
+  const nExtra = Number(aula.blocos[aula.blocos.length - 1].cod) + 1
   return (
     <main className="page">
       {deck !== null && <SlideDeck aula={aula} start={deck} onClose={() => setDeck(null)} />}
       <div className="wrap">
         <header className="lesson-head">
           <h1>{aula.titulo}</h1>
-          <p className="sub">Aula {aula.n} de 2 · 300 minutos, com intervalo de 20 minutos · continuação da Aula 5{prof ? ' · visão do professor' : ''}</p>
+          <p className="sub">2 encontros de 300 minutos, cada um com intervalo de 20 minutos · continuação da Aula 5{prof ? ' · visão do professor' : ''}</p>
           <div className="head-acts">
-            <button className="btn-slides" onClick={() => setDeck(0)}><MonitorPlay size={16} /> Apresentar a aula ({slides.length} slides)</button>
-            <a className="btn ghost" href={nb} target="_blank" rel="noreferrer">Abrir o notebook no Colab <ExternalLink size={13} /></a>
+            <button className="btn-slides" onClick={() => setDeck(0)}><MonitorPlay size={16} /> Apresentar ({slides.length} slides)</button>
+            {aula.encontros.map((e) => (
+              <button key={e.n} className="btn ghost" onClick={() => setDeck(slides.findIndex((d) => d.kind === 'secao' && d.kicker.startsWith(`Encontro ${e.n} `)))}>Começar no encontro {e.n}</button>
+            ))}
           </div>
           <div className="bigidea"><b>Resumo.</b> {aula.ideia}</div>
           <p className="chips"><b>Palavras-chave:</b> {aula.chips.join('; ')}.</p>
@@ -590,14 +618,18 @@ export function AulaPage({ aula, prev, next }: { aula: Aula; prev?: Aula; next?:
           <div className="head-cols">
             <div>
               <p style={{ fontWeight: 700, marginBottom: 6 }}>Objetivos de aprendizagem</p>
-              <p style={{ marginBottom: 6 }}>Ao final da aula, o estudante deverá ser capaz de:</p>
+              <p style={{ marginBottom: 6 }}>Ao final dos dois encontros, o estudante deverá ser capaz de:</p>
               <ol className="objs">{aula.objetivos.map((o) => <li key={o}>{o}</li>)}</ol>
             </div>
-            <a className="nb-card" href={nb} target="_blank" rel="noreferrer">
-              <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Abrir no Colab" width={117} height={20} />
-              <b>{aula.notebook.nome}</b>
-              <span>{aula.notebook.descricao}</span>
-            </a>
+            <div style={{ display: 'grid', gap: 12 }}>
+              {aula.notebooks.map((n) => (
+                <a key={n.arquivo} className="nb-card" href={nbUrl(n.arquivo)} target="_blank" rel="noreferrer">
+                  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Abrir no Colab" width={117} height={20} />
+                  <b>{n.nome}</b>
+                  <span>{n.descricao}</span>
+                </a>
+              ))}
+            </div>
           </div>
         </header>
         <div className="lesson-grid">
@@ -605,27 +637,37 @@ export function AulaPage({ aula, prev, next }: { aula: Aula; prev?: Aula; next?:
             <p className="toc-t">Sumário</p>
             <ol>
               {prof && <li><a href="#plano" onClick={go('plano')} className={on === 'plano' ? 'on' : ''}><span className="n">0</span><span>Plano docente</span></a></li>}
-              <li><a href="#slides" onClick={go('slides')} className={on === 'slides' ? 'on' : ''}><span className="n">▸</span><span>Slides da aula</span></a></li>
-              {aula.blocos.map((b) => (
-                <li key={b.id}><a href={`#${b.id}`} onClick={go(b.id)} className={on === b.id ? 'on' : ''}><span className="n">{b.cod}</span><span>{b.titulo}</span></a></li>
-              ))}
+              <li><a href="#slides" onClick={go('slides')} className={on === 'slides' ? 'on' : ''}><span className="n">▸</span><span>Slides</span></a></li>
+              {aula.blocos.map((b) => {
+                const enc = aula.encontros.find((e) => e.inicio === b.id)
+                return (
+                  <React.Fragment key={b.id}>
+                    {enc && <li className="toc-enc">Encontro {enc.n}</li>}
+                    <li><a href={`#${b.id}`} onClick={go(b.id)} className={on === b.id ? 'on' : ''}><span className="n">{b.cod}</span><span>{b.titulo}</span></a></li>
+                  </React.Fragment>
+                )
+              })}
+              <li className="toc-enc">Fechamento</li>
               {extras.map(([id, t], i) => (
-                <li key={id}><a href={`#${id}`} onClick={go(id)} className={on === id ? 'on' : ''}><span className="n">{aula.n}.{nExtra + i}</span><span>{t}</span></a></li>
+                <li key={id}><a href={`#${id}`} onClick={go(id)} className={on === id ? 'on' : ''}><span className="n">{nExtra + i}</span><span>{t}</span></a></li>
               ))}
             </ol>
           </nav>
           <div className="content">
             {prof && <PlanoDocente aula={aula} />}
             <section className="sec" id="slides">
-              <div className="sec-head"><h2>Slides da aula</h2><span className="min">{slides.length} slides</span></div>
+              <div className="sec-head"><h2>Slides</h2><span className="min">{slides.length} slides</span></div>
               <p className="prose">
-                Os slides abaixo reúnem a aula inteira. Clique na tela ou use as setas para avançar; <i>apresentar</i> abre o modo de tela cheia (tecla F).
+                Os slides abaixo reúnem os dois encontros. Clique na tela ou use as setas para avançar; <i>apresentar</i> abre o modo de tela cheia (tecla F).
                 {prof ? ' Na visão do professor, as notas de cada slide aparecem abaixo da tela e, no modo apresentação, ao lado, com o próximo slide e o cronômetro (tecla P alterna).' : ' Cada bloco também tem o seu conjunto de slides junto do texto.'}
               </p>
               <Emulador slides={slides} rodape={rodape} onPresent={(i) => setDeck(i)} />
             </section>
             {aula.blocos.map((b) => (
               <React.Fragment key={b.id}>
+                {aula.encontros.filter((e) => e.inicio === b.id).map((e) => (
+                  <div key={e.n} className="encontro" id={`encontro${e.n}`}><h2>Encontro {e.n}: {e.titulo}</h2></div>
+                ))}
                 <section className="sec" id={b.id}>
                   <div className="sec-head"><span className="n">{b.cod}</span><h2>{b.titulo}</h2><span className="min">{b.min} min</span></div>
                   {prof && <ProfBloco b={b} />}
@@ -637,11 +679,11 @@ export function AulaPage({ aula, prev, next }: { aula: Aula; prev?: Aula; next?:
                     {b.exercicios && <Exercicios itens={b.exercicios} />}
                   </Etapa>
                 </section>
-                {b.id === aula.intervaloDepois && <div className="intervalo">Intervalo de 20 minutos</div>}
+                {aula.intervalos.includes(b.id) && <div className="intervalo">Intervalo de 20 minutos</div>}
               </React.Fragment>
             ))}
             <section className="sec" id="artigos">
-              <div className="sec-head"><span className="n">{aula.n}.{nExtra}</span><h2>Leituras</h2></div>
+              <div className="sec-head"><span className="n">{nExtra}</span><h2>Leituras</h2></div>
               <div className="artigos">
                 {aula.artigos.map((a) => (
                   <article key={a.ref} className="artigo">
@@ -660,24 +702,24 @@ export function AulaPage({ aula, prev, next }: { aula: Aula; prev?: Aula; next?:
               </div>
             </section>
             <section className="sec" id="quiz">
-              <div className="sec-head"><span className="n">{aula.n}.{nExtra + 1}</span><h2>Avaliação formativa</h2><span className="min">{aula.quiz.length} questões</span></div>
+              <div className="sec-head"><span className="n">{nExtra + 1}</span><h2>Avaliação formativa</h2><span className="min">{aula.quiz.length} questões</span></div>
               <Quiz qs={aula.quiz} />
             </section>
             <section className="sec" id="entregas">
-              <div className="sec-head"><span className="n">{aula.n}.{nExtra + 2}</span><h2>Atividade avaliativa (em dupla)</h2></div>
+              <div className="sec-head"><span className="n">{nExtra + 2}</span><h2>Atividade avaliativa (em dupla)</h2></div>
               <ol className="desafios">{aula.entregas.map((d, i) => <li key={i}>{d}</li>)}</ol>
             </section>
             <section className="sec" id="limitacoes">
-              <div className="sec-head"><span className="n">{aula.n}.{nExtra + 3}</span><h2>Pressupostos e limitações</h2></div>
+              <div className="sec-head"><span className="n">{nExtra + 3}</span><h2>Pressupostos e limitações</h2></div>
               <ol className="desafios">{aula.limitacoes.map((d, i) => <li key={i}>{d}</li>)}</ol>
             </section>
             <section className="sec" id="referencias">
-              <div className="sec-head"><span className="n">{aula.n}.{nExtra + 4}</span><h2>Referências</h2></div>
+              <div className="sec-head"><span className="n">{nExtra + 4}</span><h2>Referências</h2></div>
               <ul className="refs">{[...aula.referencias].sort((a, b) => a.localeCompare(b, 'pt')).map((r) => <li key={r}>{r}</li>)}</ul>
             </section>
-            <nav className="pager" aria-label="Outras aulas">
-              {prev ? <a href={`#${prev.id}`}><small><ArrowLeft size={12} /> Aula {prev.n}</small>{prev.titulo}</a> : <a href="#inicio"><small><ArrowLeft size={12} /> Início</small>Apresentação</a>}
-              {next ? <a href={`#${next.id}`} className="next"><small>Aula {next.n} <ArrowRight size={12} /></small>{next.titulo}</a> : <a href="#inicio" className="next"><small>Início <ArrowRight size={12} /></small>Apresentação</a>}
+            <nav className="pager" aria-label="Navegação">
+              <a href="#inicio"><small><ArrowLeft size={12} /> Início</small>Apresentação</a>
+              <a href="#top" className="next" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}><small>Topo <ArrowRight size={12} /></small>Sumário</a>
             </nav>
           </div>
         </div>

@@ -402,11 +402,99 @@ def fig_arquivos_ultralytics(R: Path):
     salvar(fig, "real_arquivos_ultralytics")
 
 
+# ======================================================================= três tarefas, três modelos reais
+NOMES_VAR = {"chardonnay": "Chardonnay", "cabernet_franc": "Cab. Franc", "cabernet_sauvignon": "Cab. Sauvignon", "sauvignon_blanc": "Sauv. Blanc", "syrah": "Syrah"}
+
+
+def fig_tarefas(D: Path, R: Path):
+    from ultralytics import YOLO
+    if not (R / "tarefas_metrics.json").exists():
+        print("sem tarefas_metrics.json: rode scripts/treinar_tarefas.py"); return {}
+    cls = YOLO(str(R / "C_cls" / "weights" / "best.pt"))
+    det = carregar(R, "A_pre")
+    seg = YOLO(str(R / "D_seg" / "weights" / "best.pt"))
+    # foto de teste que tem máscara, para mostrar as três saídas na mesma imagem
+    nome = sorted((D / "D_seg" / "images" / "test").glob("*.jpg"))[2].stem
+    p = D / "raw" / (nome + ".jpg")
+    im = rgb(p); h, w = im.shape[:2]
+    g = gt_de(D / "raw" / (nome + ".txt"), w, h)
+    fig = plt.figure(figsize=(17, 9.6))
+    gs = fig.add_gridspec(2, 4, height_ratios=[1, 1.25], hspace=0.22, wspace=0.05)
+    # (a) classificação: recortes -> variedade
+    escolhidos = g[np.argsort(-(g[:, 2] - g[:, 0]) * (g[:, 3] - g[:, 1]))][:4].astype(int)
+    for k, b in enumerate(escolhidos):
+        ax = fig.add_subplot(gs[0, k])
+        rec = im[max(0, b[1]):b[3], max(0, b[0]):b[2]]
+        r = cls.predict(rec[:, :, ::-1].copy(), imgsz=224, verbose=False)[0]
+        top = r.probs.top5[:3]
+        txt = "\n".join(f"{NOMES_VAR.get(r.names[i], r.names[i])}: {float(r.probs.data[i]):.2f}" for i in top)
+        ax.imshow(rec); limpar(ax)
+        ax.set_title(("(a) classificação de recortes\n" if k == 0 else "\n") + txt, fontsize=10.5, loc="left")
+    # (b) detecção
+    ax = fig.add_subplot(gs[1, 0:2]); ax.imshow(im)
+    b, c = prever(det, p)
+    for bb, cc in zip(b, c):
+        caixa(ax, bb, AZUL_E, 1.8, txt=f"{cc:.2f}")
+    ax.set_title(f"(b) detecção: {len(b)} caixas com confiança", fontsize=12, loc="left"); limpar(ax)
+    # (c) segmentação de instâncias
+    ax = fig.add_subplot(gs[1, 2:4]); ax.imshow(im)
+    rseg = seg.predict(str(p), imgsz=1024, conf=0.25, verbose=False)[0]
+    n = 0
+    if rseg.masks is not None:
+        cores = plt.cm.tab20(np.linspace(0, 1, 20))
+        for k, poly in enumerate(rseg.masks.xy):
+            if len(poly) < 3:
+                continue
+            ax.add_patch(patches.Polygon(poly, closed=True, fc=(*cores[k % 20][:3], 0.45), ec=cores[k % 20], lw=1.2)); n += 1
+    ax.set_title(f"(c) segmentação de instâncias: {n} máscaras, uma por cacho", fontsize=12, loc="left"); limpar(ax)
+    fig.suptitle(f"Três modelos YOLO11n reais na mesma foto de teste do WGISD ({nome}). A classificação recebe um recorte; detecção e segmentação recebem a foto inteira.", fontsize=11.5, y=0.995)
+    salvar(fig, "real_tres_tarefas")
+
+    # matriz de confusão da classificação (teste)
+    from collections import Counter
+    classes = sorted(p.name for p in (D / "C_cls" / "test").iterdir())
+    M = np.zeros((len(classes), len(classes)), int)
+    for i, cl in enumerate(classes):
+        fs = sorted((D / "C_cls" / "test" / cl).glob("*.jpg"))
+        for f in fs:
+            r = cls.predict(str(f), imgsz=224, verbose=False)[0]
+            j = classes.index(r.names[r.probs.top1])
+            M[i, j] += 1
+    Mn = M / M.sum(1, keepdims=True)
+    fig, ax = plt.subplots(figsize=(7.4, 6.2))
+    ax.imshow(Mn, cmap="Oranges", vmin=0, vmax=1)
+    lab = [NOMES_VAR[c] for c in classes]
+    ax.set_xticks(range(len(classes)), lab, rotation=30, ha="right"); ax.set_yticks(range(len(classes)), lab)
+    for i in range(len(classes)):
+        for j in range(len(classes)):
+            ax.text(j, i, f"{Mn[i, j]:.2f}\n({M[i, j]})", ha="center", va="center", fontsize=9, color="white" if Mn[i, j] > 0.6 else "black")
+    ax.set_xlabel("variedade prevista"); ax.set_ylabel("variedade verdadeira")
+    acc = np.trace(M) / M.sum()
+    ax.set_title(f"Classificação de recortes de cachos (teste): acerto {acc:.1%}", fontsize=12)
+    salvar(fig, "real_cls_matriz")
+
+    # segmentação: anotação x previsão
+    fig, axs = plt.subplots(1, 2, figsize=(15, 5))
+    poly_gt = []
+    for l in (D / "D_seg" / "labels" / "test" / (nome + ".txt")).read_text().splitlines():
+        v = np.array(list(map(float, l.split()[1:]))).reshape(-1, 2) * [w, h]
+        poly_gt.append(v)
+    for ax, (t, polys, cor) in zip(axs, [("anotação do WGISD (máscaras de instância)", poly_gt, VERDE), ("previsão do YOLO11n-seg", [q for q in (rseg.masks.xy if rseg.masks is not None else []) if len(q) >= 3], LARANJA)]):
+        ax.imshow(im)
+        for q in polys:
+            ax.add_patch(patches.Polygon(q, closed=True, fc=(0, 0, 0, 0), ec=cor, lw=1.6))
+        ax.set_title(f"{t}: {len(polys)}", fontsize=12); limpar(ax)
+    salvar(fig, "real_seg_pred")
+    met = json.loads((R / "tarefas_metrics.json").read_text())
+    return {"cls": met["cls"], "seg": met["seg"], "cls_acc_test_manual": float(acc), "cls_n_test": int(M.sum()),
+            "cls_classes": lab, "tarefas_foto": nome}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dados", required=True, help="pasta com wgisd/ (raw, A, B) e runs/")
     a = ap.parse_args()
-    base = Path(a.dados); D = base / "wgisd"; R = base / "runs"
+    base = Path(a.dados).resolve(); D = base / "wgisd"; R = base / "runs"
     info = {}
     fig_aula5(D)
     info.update(fig_coco_falha(D))
@@ -417,6 +505,7 @@ def main():
     info.update(fig_pr_contagem(D, R))
     fig_dominio(D, R)
     fig_arquivos_ultralytics(R)
+    info.update(fig_tarefas(D, R))
     for n in ("A_pre", "A_scratch", "B_dom"):
         info[n] = json.loads((R / f"{n}_metrics.json").read_text())
     txt = json.dumps(info, indent=1, ensure_ascii=False)
