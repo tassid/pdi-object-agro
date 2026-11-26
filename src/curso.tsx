@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ExternalLink, Maximize2, MonitorPlay, StickyNote, X } from 'lucide-react'
@@ -261,15 +261,48 @@ export function SlideView({ d, n, rodape }: { d: DeckSlide; n: number; rodape?: 
 
 const aspectos: Record<string, number> = {}
 
+/** reduz a fonte (em cqw) até o conteúdo caber na caixa, como o "shrink" do Beamer */
+function useCaber(ref: React.RefObject<HTMLElement | null>, base: number, min: number, deps: unknown[], pelaFilha = false) {
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ajustar = () => {
+      if (!el.clientWidth) return
+      let f = base
+      el.style.fontSize = `${f}cqw`
+      const alvo = pelaFilha ? ((el.firstElementChild as HTMLElement | null) ?? el) : el
+      const estoura = () =>
+        alvo === el
+          ? el.scrollHeight > el.clientHeight + 3
+          : alvo.getBoundingClientRect().height > el.getBoundingClientRect().height + 2 || alvo.scrollWidth > el.clientWidth + 2
+      while (f > min && estoura()) {
+        f = Math.max(min, f - 0.1)
+        el.style.fontSize = `${f}cqw`
+      }
+    }
+    ajustar()
+    const ro = new ResizeObserver(ajustar)
+    ro.observe(el)
+    document.fonts?.ready.then(ajustar)
+    el.querySelectorAll('img').forEach((i) => i.addEventListener('load', ajustar))
+    return () => ro.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
+}
+
 function SlideConteudo({ s, n, rodape, secao }: { s: SlideSpec; n: number; rodape?: string; secao?: string }) {
   const [asp, setAsp] = useState(() => (s.img ? aspectos[s.img] ?? 1.5 : 1.5))
   const temTexto = !!(s.pontos?.length || s.tex || s.formula)
   const largo = !!s.img && temTexto && asp > 1.9
+  const tRef = useRef<HTMLDivElement>(null)
+  const bRef = useRef<HTMLDivElement>(null)
+  useCaber(tRef, 5.2, 2.6, [s.titulo], true)
+  useCaber(bRef, 2.35, 1.3, [s, largo])
   return (
     <div className="slide">
-      <div className="s-title">{s.titulo}</div>
+      <div className="s-title" ref={tRef}><span>{s.titulo}</span></div>
       <div className="s-bar"><span className="s-num">{n}</span><span className="s-rule" /></div>
-      <div className="s-body">
+      <div className="s-body" ref={bRef}>
         <div className={`s-grid ${!s.img ? 'only-text' : !temTexto ? 'only-img' : largo ? 'wide' : ''}`}>
           {temTexto && (
             <div>
@@ -297,14 +330,17 @@ export function buildDeck(aula: Aula): { slides: DeckSlide[]; inicio: Record<str
   const slides: DeckSlide[] = []
   const inicio: Record<string, number> = {}
   slides.push({ kind: 'capa', titulo: aula.titulo, sub: `Aula ${aula.n} de 2 · 5 horas · continuação da Aula 5 (Reconhecimento de Padrões)`, rodape: 'Processamento de Imagens Aplicado à Agroindústria', notas: 'Abrir com a pergunta que fecha a Aula 5: como passar de classificar um objeto isolado para encontrar e contar vários objetos numa imagem de campo?' })
-  slides.push({ kind: 'conteudo', s: { titulo: 'Objetivos', pontos: aula.objetivos.map((o) => o.replace(/\.$/, '')) , notas: 'Ler os objetivos em voz alta e indicar em qual bloco cada um é avaliado.' } })
+  const partes = <T,>(xs: T[], n: number) => { const k = Math.ceil(xs.length / n); const t = Math.ceil(xs.length / k); return Array.from({ length: k }, (_, i) => xs.slice(i * t, (i + 1) * t)) }
+  partes(aula.objetivos, 4).forEach((g, i, all) =>
+    slides.push({ kind: 'conteudo', s: { titulo: all.length > 1 ? `Objetivos (${i + 1}/${all.length})` : 'Objetivos', pontos: g.map((o) => o.replace(/\.$/, '')), notas: 'Ler os objetivos em voz alta e indicar em qual bloco cada um é avaliado.' } }))
   aula.blocos.forEach((b) => {
     inicio[b.id] = slides.length
     slides.push({ kind: 'secao', kicker: `Bloco ${b.cod} · ${b.min} min`, titulo: b.titulo, sub: 'teoria → exemplos → prática', notas: b.prof?.roteiro.map((r) => `${r[0]}: ${r[1]}`).join(' · ') })
     b.slides.forEach((s) => slides.push({ kind: 'conteudo', s, secao: `${b.cod} ${b.titulo}` }))
     if (b.id === aula.intervaloDepois) slides.push({ kind: 'secao', kicker: 'Intervalo', titulo: '20 minutos', sub: aula.n === 2 ? 'O treinamento continua em execução na GPU.' : 'Conferir se todos têm acesso ao CVAT e ao Colab.' })
   })
-  slides.push({ kind: 'conteudo', s: { titulo: 'Leituras', pontos: aula.artigos.map((a) => <><b>{a.tag}</b>: {a.ref.length > 120 ? a.ref.slice(0, 118) + '…' : a.ref}</>) } })
+  partes(aula.artigos, 6).forEach((g, i, all) =>
+    slides.push({ kind: 'conteudo', s: { titulo: all.length > 1 ? `Leituras (${i + 1}/${all.length})` : 'Leituras', pontos: g.map((a) => <><b>{a.tag}</b>: {a.ref.length > 120 ? a.ref.slice(0, 118) + '…' : a.ref}</>) } }))
   return { slides, inicio }
 }
 

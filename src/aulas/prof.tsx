@@ -97,9 +97,9 @@ export const PROF2: ProfAula = {
     preparo: [
       'Conferir no Colab da sala: GPU T4 disponível, ultralytics instalado e pesos yolo11n.pt baixados (ou levar o arquivo em pendrive).',
       'Deixar o conjunto da Aula 1 de cada dupla no Google Drive, já auditado; manter o WGISD original como alternativa.',
-      'Disparar o treino antes do intervalo (Bloco 2.3); com 40 épocas e imgsz 640 leva cerca de 15 min numa T4.',
-      'Ter os resultados reais deste material (Figuras de curvas, PR e domínio) para comparar com os da turma.',
-      'Abrir os PDFs da mosca-das-frutas e das daninhas na página das figuras usadas no Bloco 2.7.',
+      'Disparar o treino no fim do Bloco 2.2, antes do intervalo; com 40 épocas e imgsz 640 leva cerca de 15 min numa T4.',
+      'Rodar uma vez o notebook Aula2_YOLO_na_pratica.ipynb inteiro na conta da sala, para baixar o WGISD e os pesos com antecedência.',
+      'Imprimir a ficha do Bloco 2.6 e abrir os PDFs da mosca-das-frutas, soja, alface e espécies florestais (RIUT).',
     ],
     planoB: [
       'Sem GPU: treinar com imgsz 416, 10 épocas e fração do conjunto (fraction=0.3) na CPU, ou usar os resultados reais deste site como material de análise.',
@@ -123,57 +123,57 @@ export const PROF2: ProfAula = {
   },
   blocos: {
     b21: {
-      roteiro: [['0–15 min', 'Ativar a GPU, instalar o Ultralytics, montar o Drive e verificar data.yaml e contagens. Ninguém avança sem a célula de verificação passando.']],
-      erros: ['Caminho relativo errado no data.yaml.', 'Sessão do Colab sem GPU (Ambiente de execução → Alterar tipo).'],
+      roteiro: [
+        ['0–5 min', 'Mostrar o que o notebook final faz (contagem e planilha) para dar sentido às etapas.'],
+        ['5–20 min', 'Construir junto, num notebook em branco: GPU, instalação, Drive, dados.'],
+        ['20–30 min', 'Célula de conferência: ninguém segue sem imagens e rótulos batendo e caixas sobre os cachos.'],
+      ],
+      erros: ['Sessão sem GPU.', 'Nome da classe diferente entre CVAT e data.yaml.', 'Salvar em /content e perder tudo quando a sessão cai.'],
     },
     b22: {
       roteiro: [
-        ['0–12 min', 'Perceptron de Rosenblatt e regra de atualização (porta AND) no quadro; laboratório do perceptron. Ligar ao perceptron da Aula 5 (slide 31).'],
-        ['12–22 min', 'XOR: não separabilidade; camada oculta e ativações (sigmoide, ReLU, SiLU).'],
-        ['22–32 min', 'Gradiente descendente e retropropagação, em nível de intuição.'],
-        ['32–45 min', 'Da MLP à CNN: filtros aprendidos × filtros clássicos de PDI; mapas de características reais.'],
-        ['45–50 min', 'Transferência de aprendizagem: curvas reais com e sem pesos do COCO.'],
+        ['0–15 min', 'Tabela de parâmetros: o que cada um muda e quando mexer.'],
+        ['15–25 min', 'Resultado real: pesos prontos × do zero; parada antecipada.'],
+        ['25–35 min', 'Objetos pequenos: caso dos esporos (UTFPR) e imgsz.'],
+        ['35–45 min', 'Cada dupla dispara o treino; conferir que todos começaram antes do intervalo.'],
       ],
-      perguntas: ['Por que uma única reta não resolve o XOR?', 'O que um filtro da primeira camada aprende que se parece com Sobel?'],
+      erros: ['batch alto demais para a memória.', 'Esquecer de apontar project para o Drive.'],
     },
     b23: {
       roteiro: [
-        ['0–15 min', 'Perdas do Ultralytics (box, cls, dfl) e o que cada uma mede.'],
-        ['15–25 min', 'Aumento de dados, resolução de entrada, GSD e SAHI para objetos pequenos (casos dos esporos da UTFPR).'],
-        ['25–35 min', 'Parada antecipada e paciência (curva real).'],
-        ['35–50 min', 'Configurar e disparar o treino de cada dupla antes do intervalo.'],
+        ['0–10 min', 'Abrir a pasta do treino da própria dupla e o results.png.'],
+        ['10–25 min', 'Precisão, revocação e mAP em palavras, com a tabela de valores reais; acertos e erros numa foto.'],
+        ['25–40 min', 'Limiar de confiança: tabela de contagem na validação e curva F1; caso das daninhas.'],
       ],
-      erros: ['batch grande demais para a memória da GPU (reduzir para 8).', 'Esquecer patience e treinar épocas inúteis.'],
+      perguntas: ['Em que época a validação de vocês parou de melhorar?', 'Para contar, vocês prefeririam errar a mais ou a menos? Por quê?'],
     },
     b24: {
       roteiro: [
-        ['0–12 min', 'Ler results.png da própria dupla: perdas de treino e validação, sinais de sub e sobreajuste.'],
-        ['12–30 min', 'P, R, F1, curva PR e mAP50 / mAP50–95 com os resultados reais do material; comparar com os da turma.'],
-        ['30–40 min', 'Erro de contagem: métrica operacional (Figura real de contagem).'],
-        ['40–50 min', 'Busca em grade × aleatória; o teste só no fim.'],
+        ['0–15 min', 'Contar em fotos e salvar a planilha no Drive.'],
+        ['15–30 min', 'Vídeo com rastreamento: soma de detecções × identificações; caso do gado (UTFPR).'],
+        ['30–40 min', 'Exportar para ONNX e conferir as previsões.'],
+        ['40–50 min', 'Desafio: fotos do celular dos alunos.'],
       ],
-      perguntas: ['Por que o mAP50–95 é sempre menor que o mAP50?', 'Qual limiar de confiança vocês usariam para contar cachos? Com base em qual conjunto?'],
     },
     b25: {
       roteiro: [
-        ['0–20 min', 'Avaliar o modelo da dupla em outra variedade ou propriedade; comparar com o experimento B real (Syrah).'],
-        ['20–35 min', 'Rastreamento com ByteTrack numa sequência e contagem sem duplicatas.'],
-        ['35–55 min', 'Exportação (ONNX), registro de versões e cartão do modelo.'],
+        ['0–10 min', 'Perguntar quanto a turma acha que o modelo perde na Syrah; mostrar o resultado real.'],
+        ['10–30 min', 'Cada dupla roda a seção 6 e classifica os erros das cinco fotos.'],
+        ['30–45 min', 'Quadro com os tipos de erro de todas as duplas e a ação proposta para cada um.'],
       ],
-      erros: ['Avaliar “domínio externo” com imagens que estavam no treino.'],
+      erros: ['Chamar de “teste em outro lugar” fotos que estavam no treino.'],
     },
     b26: {
       roteiro: [
-        ['0–10 min', 'Gerar as previsões do modelo da dupla no conjunto de validação e salvar os falsos positivos e negativos.'],
-        ['10–25 min', 'Classificar pelo menos dez erros por causa (oclusão, tamanho, iluminação, rótulo errado, duplicata).'],
-        ['25–35 min', 'Calcular erro absoluto médio de contagem e comparar com o valor real deste material.'],
+        ['0–12 min', 'Mosca-das-frutas (PPGTCA): percorrer as etapas com os prints; discutir o falso positivo de campo.'],
+        ['12–32 min', 'Duplas preenchem a ficha de um trabalho (soja, alface ou espécies florestais).'],
+        ['32–35 min', 'Duas duplas apresentam o que acharam.'],
       ],
-      perguntas: ['Quantos dos “falsos positivos” são, na verdade, cachos não anotados?'],
     },
     b27: {
       roteiro: [
-        ['0–12 min', 'Trabalhos da UTFPR: mosca-das-frutas (PPGTCA) e daninhas embarcadas. Ler as figuras impressas como banca.'],
-        ['12–25 min', 'Requisitos, entregáveis, rubrica e cronograma do trabalho prático; fechamento.'],
+        ['0–15 min', 'Projeto: entregáveis e rubrica.'],
+        ['15–35 min', 'Cada dupla define problema, fotos, classes e de onde virá o teste em outro lugar; registrar numa tabela da turma.'],
       ],
     },
   },

@@ -329,12 +329,12 @@ h1, h2, h3, h4 { font-family: var(--f-serif); font-weight: 700; color: var(--ink
    SLIDES · tema da Aula 5
    ===================================================================== */
 .slide { position: relative; aspect-ratio: 16 / 9; width: 100%; background: #fff; font-family: var(--f-sans); color: #1b1b1b; overflow: hidden; container-type: inline-size; }
-.slide .s-title { position: absolute; left: 7.8%; right: 4%; top: 4.5%; height: 13%; display: flex; align-items: flex-end; font-family: var(--f-sans); font-weight: 400; color: var(--brown); font-size: 5.2cqw; line-height: 1.05; letter-spacing: 0.01em; }
+.slide .s-title { position: absolute; left: 7.8%; right: 4%; top: 3%; height: 14.5%; display: flex; align-items: flex-end; overflow: hidden; font-family: var(--f-sans); font-weight: 400; color: var(--brown); font-size: 5.2cqw; line-height: 1.05; letter-spacing: 0.01em; }
 .slide .s-title small { font-size: 0.42em; color: var(--ink-faint); margin-left: 14px; padding-bottom: 0.4em; }
 .slide .s-bar { position: absolute; left: 0; right: 0; top: 19%; height: 3.1%; display: flex; gap: 0.6%; }
 .slide .s-bar .s-num { width: 5.9%; background: var(--orange); color: #fff; font-family: var(--f-serif); font-weight: 700; font-size: 1.3cqw; display: flex; align-items: center; justify-content: center; }
 .slide .s-bar .s-rule { flex: 1; background: var(--blue); }
-.slide .s-body { position: absolute; left: 7.8%; right: 4%; top: 25.5%; bottom: 6%; font-size: 2.35cqw; line-height: 1.32; }
+.slide .s-body { position: absolute; left: 7.8%; right: 4%; top: 25.5%; bottom: 6%; overflow: hidden; font-size: 2.35cqw; line-height: 1.32; }
 .slide .s-foot { position: absolute; left: 7.8%; right: 4%; bottom: 1.6%; font-size: 1.1cqw; color: var(--ink-faint); display: flex; justify-content: space-between; }
 
 /* marcadores: □ laranja (nível 1), ▣ azul (nível 2) */
@@ -440,3 +440,5 @@ main.page { counter-reset: fig; }
 .s-grid.wide { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 2%; }
 .s-grid.wide .s-list { display: flex; flex-wrap: wrap; gap: 0.2em 1.6em; font-size: 0.9em; }
 .s-grid.wide .s-fig img { object-position: center top; }
+
+.slide, .slide * { hyphens: manual; }

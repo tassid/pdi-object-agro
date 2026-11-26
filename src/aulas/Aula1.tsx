@@ -398,7 +398,7 @@ for conf in [0.05, 0.25, 0.5]:
           <Fig n="cvat/image004" cap="Criação de uma tarefa: envio das imagens e divisão em jobs. Fonte: documentação do CVAT." />
           <Fig n="cvat/image013_detrac" cap="Editor de anotação com objetos delimitados por retângulos e lista de objetos à direita. Fonte: documentação do CVAT." />
           <Fig n="cvat/review_mode_screen" cap="Modo de revisão: o revisor registra problemas diretamente sobre a imagem. Fonte: documentação do CVAT." />
-          <Fig n="cvat/export_job_as_dataset_dialog" w={520} cap="Exportação do job como conjunto de dados; escolher o formato Ultralytics YOLO e salvar as imagens. Fonte: documentação do CVAT." />
+          <Fig n="cvat/export_job_as_dataset_dialog" w={520} cap="Exportação do job como conjunto de dados. Em Export format, trocar o padrão (CVAT for images) por Ultralytics YOLO Detection e ligar Save images. Fonte: documentação do CVAT." />
           <h4>Um protocolo real: armadilha McPhail</h4>
           <p>Na dissertação de Medeiros (2025), do PPGTCA, a anotação das moscas-das-frutas exigiu definir antes uma região de interesse na armadilha e um critério para insetos pequenos e parcialmente visíveis. O falso positivo de campo (p. 62) mostra o que acontece quando um caso não previsto no protocolo aparece.</p>
           <Trabalho t={T.mosca} />

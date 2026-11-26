@@ -10,7 +10,7 @@ Cada bloco segue **teoria → exemplos → prática**, com slides integrados (em
 | Aula | Blocos | Notebook |
 |---|---|---|
 | 1 · Fundamentos de detecção e engenharia de dados | 1.0 da Aula 5 à detecção · 1.1 PDI clássico e tarefas · 1.2 R-CNN, U-Net, YOLO e formatos · 1.3 IoU, NMS, GSD · 1.4 protocolo no CVAT · 1.5 Lab 1: anotação, auditoria e partição · 1.6 leitura crítica | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tassid/pdi-object-agro/blob/main/notebooks/Aula1_Anotacao_Auditoria_Split.ipynb) |
-| 2 · Redes neurais, treinamento e avaliação | 2.1 ambiente · 2.2 perceptron → CNN · 2.3 treino YOLO · 2.4 métricas · 2.5 Lab 2: domínio, rastreamento, exportação · 2.6 Lab 3: análise de erros e contagem · 2.7 pesquisa na UTFPR e trabalho | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tassid/pdi-object-agro/blob/main/notebooks/Aula2_Treino_Avaliacao_Dominio.ipynb) |
+| 2 · YOLO na prática: do Colab ao campo | 2.1 montar o Colab · 2.2 treinar · 2.3 ler os resultados · 2.4 Lab: contar, rastrear, exportar · 2.5 Lab: testar em outro lugar e analisar erros · 2.6 trabalhos reais da UTFPR · 2.7 projeto da dupla | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tassid/pdi-object-agro/blob/main/notebooks/Aula2_YOLO_na_pratica.ipynb) |
 
 ## Imagens
 
@@ -53,8 +53,8 @@ src/
   aulas/Aula1.tsx    Aula 1
   aulas/Aula2.tsx    Aula 2
   aulas/prof.tsx     conteúdo exclusivo da visão do professor
-  labs.tsx           laboratórios no navegador (IoU, NMS, conversor, perceptron, partição, GSD, métricas, convolução)
-scripts/             treino, figuras reais e figuras didáticas
+  labs.tsx           laboratórios no navegador (IoU, NMS, conversor, partição, GSD)
+scripts/             treino, figuras reais, figuras didáticas e gerador do notebook da Aula 2
 notebooks/           notebooks do Colab
 ```
 

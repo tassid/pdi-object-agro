@@ -16,7 +16,7 @@ export const blocoPonte: Bloco = {
     { titulo: 'Fronteiras: simples, linear, complexa', img: 'aula5_fronteiras_cachos', pontos: ['Subajuste: erro alto no treino e no teste', 'Linear (perceptron): melhor erro de teste', 'Sobreajuste: erro de treino 0%, teste pior', 'Generalizar é o objetivo (Aula 5, slides 35–36)'], notas: 'Os três erros foram calculados com 60% dos cachos para treino e 40% para teste. Destacar que o 1-NN decora o treino.' },
     { titulo: 'Das taxas da Aula 5 às métricas de detecção', tex: String.raw`\text{Confiabilidade}=\frac{N_{rec}}{N_{rec}+N_{err}}\;\longleftrightarrow\;P=\frac{VP}{VP+FP}`, pontos: ['Taxa de reconhecimento ↔ revocação (com rejeição)', 'Confiabilidade ↔ precisão', 'Em detecção, um objeto não encontrado vira FN', 'Uma caixa onde não há objeto vira FP'], notas: 'Ligação explícita com o slide 38 da Aula 5. A rejeição corresponde, em detecção, às previsões abaixo do limiar de confiança.' },
     { titulo: 'O que muda: o objeto não vem recortado', img: 'aula5_recorte_vs_deteccao', pontos: ['Onde está? (localização)', 'O que é? (classe)', 'Quantos são? (contagem)', 'A rede aprende as características a partir de exemplos anotados'] },
-    { titulo: 'Roteiro das duas aulas', pontos: [['Aula 1: dados', ['tarefas, arquiteturas, formatos', 'IoU, NMS, GSD', 'protocolo no CVAT, auditoria e partição']], ['Aula 2: modelo', ['perceptron → CNN → transferência', 'treino YOLO na GPU, métricas', 'mudança de domínio e trabalhos da UTFPR']]] },
+    { titulo: 'Roteiro das duas aulas', pontos: [['Aula 1: dados', ['tarefas, arquiteturas, formatos', 'IoU, NMS, GSD', 'protocolo no CVAT, auditoria e partição']], ['Aula 2: YOLO na prática', ['montar o Colab e treinar na GPU', 'ler resultados, contar, rastrear, exportar', 'testar em outro lugar e trabalhos da UTFPR']]] },
   ],
   teoria: (
     <>
@@ -39,7 +39,7 @@ export const blocoPonte: Bloco = {
       <MM n="2" t={String.raw`C(t) = c_{12}\,P(x \geq t \mid \omega_1)\,P(\omega_1) + c_{21}\,P(x < t \mid \omega_2)\,P(\omega_2).`} />
       <p>
         Com mais de uma característica, a regra passa a ser uma <b>fronteira de decisão</b> no espaço de características. A Aula 5 mostrou que fronteiras muito simples subajustam e
-        fronteiras muito complexas sobreajustam: decoram o treino e generalizam mal. O perceptron, retomado na Aula 2, é o modelo linear mais simples para essa fronteira.
+        fronteiras muito complexas sobreajustam: decoram o treino e generalizam mal. O perceptron (slide 31 da Aula 5) é o modelo linear mais simples para essa fronteira.
       </p>
       <h4>Das taxas da Aula 5 às métricas de detecção</h4>
       <p>
