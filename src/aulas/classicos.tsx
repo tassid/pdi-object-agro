@@ -19,10 +19,16 @@ export const blocoClassicos: Bloco = {
   slides: [
     { titulo: 'Antes do YOLO', img: 'pipeline_classico', legenda: 'Cadeia clássica sobre o CWFID', pontos: ['Classificar, contar e segmentar já eram feitos com PDI clássico', 'Cor, limiar, morfologia, contornos', 'O projetista escolhe cada regra'] },
     { titulo: 'Classificação clássica: tomates pela cor', img: 'artigos/cl_tomate_p10', legenda: 'Noguti Júnior et al. (2023), Revista FT', pontos: ['Artigo da UNIARA (Revista FT)', 'Tabela de faixas de matiz (HSV) por cor', 'Uma pegadinha: H em graus × H do OpenCV'] },
+    { titulo: 'Laboratório: tomates classificados pela tabela HSV', img: 'lab_tomate', legenda: 'Captura do laboratório desta seção (cena sintética)', pontos: ['Mudar câmera e luz e ver qual tomate a tabela erra'] },
     { titulo: 'Contagem clássica: frangos no aviário', img: 'artigos/cl_aviario_p30', legenda: 'Berlanda (2015), UTFPR Medianeira', pontos: ['TCC da UTFPR Medianeira (orientação: Prof. Pedro)', 'Subtração de fundo e limiar', 'Pixels brancos ÷ área de uma ave'] },
+    { titulo: 'Laboratório: aves contadas em seis regiões', img: 'lab_aviario', legenda: 'Captura do laboratório desta seção (cena sintética)', pontos: ['Pixels brancos ÷ área de uma ave, região por região'] },
     { titulo: 'Contagem clássica: plantas de soja por drone', img: 'artigos/cl_soja_p6', legenda: 'Souza et al. (2022), Energia na Agricultura', pontos: ['Artigo em Energia na Agricultura', 'Falhas e duplas na linha de plantio', 'Resolução do voo decide o que se vê'] },
+    { titulo: 'Laboratório: falhas e duplas na linha de soja', img: 'lab_soja', legenda: 'Captura do laboratório desta seção (cena sintética)', pontos: ['Distância entre plantas vizinhas: longa demais é falha, curta demais é dupla'] },
     { titulo: 'Segmentação clássica: doença em folhas de laranjeira', img: 'artigos/cl_laranjeira_p50', legenda: 'Schenatto (2011), UTFPR Medianeira', pontos: ['TCC da UTFPR Medianeira (coorientação: Prof. Pedro)', 'Área de lesão ÷ área da folha', 'Da folha ao mapa do pomar'] },
+    { titulo: 'Laboratório: severidade numa folha', img: 'lab_laranjeira', legenda: 'Captura do laboratório desta seção (cena sintética)', pontos: ['Área das lesões ÷ área da folha'] },
+    { titulo: 'Laboratório: da folha ao mapa do pomar', img: 'lab_pomar', legenda: 'Captura do laboratório desta seção (cena sintética)', pontos: ['36 pontos amostrados viram um mapa do pomar'] },
     { titulo: 'Segmentação treinável: cobertura do solo em citros', img: 'artigos/cl_citros_p18', legenda: 'Carvalho e Carvalho (2022), Embrapa', pontos: ['Boletim da Embrapa Mandioca e Fruticultura', 'O usuário pinta exemplos e um classificador aprende os pixels', 'Um passo entre o clássico e a rede neural'] },
+    { titulo: 'Laboratório: segmentação treinável', img: 'lab_citros', legenda: 'Captura do laboratório desta seção (cena sintética)', pontos: ['Pintar exemplos, treinar e ver o mapa de cobertura'] },
     { titulo: 'O que muda com o YOLO', img: 'classico_falha', legenda: 'A regra clássica falhando no WGISD', pontos: ['As regras saem da cabeça do projetista e vêm dos exemplos anotados', 'O trabalho se desloca para a anotação (CVAT)', 'A avaliação continua igual: comparar com a verdade'] },
   ],
   teoria: (

@@ -3,20 +3,22 @@ import { aula1 } from './Aula1'
 import { aula2 } from './Aula2'
 import { blocoClsSeg, blocoTarefas } from './tarefas'
 import { blocoClassicos } from './classicos'
+import { blocoHistoria } from './historia'
+import { blocoFrutas } from './frutas'
 import { PROF_TAREFAS } from './prof'
 
 /* Aula única. Os blocos vêm das antigas Aula 1 e Aula 2, sem repetições,
    mais dois blocos sobre as tarefas (classificação, detecção e segmentação). */
 
 const pega = (id: string, min: number): Bloco => {
-  const b = [...aula1.blocos, ...aula2.blocos, blocoTarefas, blocoClsSeg, blocoClassicos].find((x) => x.id === id)
+  const b = [...aula1.blocos, ...aula2.blocos, blocoTarefas, blocoClsSeg, blocoClassicos, blocoHistoria, blocoFrutas].find((x) => x.id === id)
   if (!b) throw new Error(`bloco ${id} não encontrado`)
   return { ...b, min, prof: PROF_TAREFAS[id] ?? b.prof }
 }
 
 const ordem: [string, number][] = [
-  ['b10', 0], ['bT1', 0], ['bC', 0], ['b12', 0], ['b13', 0], ['b14', 0], ['b15', 0], ['b21', 0],
-  ['b22', 0], ['b23', 0], ['bT2', 0], ['b24', 0], ['b25', 0], ['b26', 0], ['b27', 0],
+  ['b10', 0], ['bH', 0], ['bT1', 0], ['bC', 0], ['b12', 0], ['b13', 0], ['b14', 0], ['b15', 0], ['b21', 0],
+  ['b22', 0], ['b23', 0], ['bT2', 0], ['b24', 0], ['b25', 0], ['b26', 0], ['bF', 0], ['b27', 0],
 ]
 
 const blocos = ordem.map(([id, min], i) => ({ ...pega(id, min), cod: String(i + 1) }))
@@ -38,7 +40,9 @@ export const curso: Aula = {
     'Montar um notebook do Colab e treinar YOLO de detecção, classificação e segmentação a partir de pesos pré-treinados.',
     'Ler os resultados do treino (results.png, precisão, revocação, mAP, acerto) e escolher o limiar de confiança na validação.',
     'Usar o modelo para contar em fotos e vídeos, exportá-lo e testá-lo em dados de outro lugar, classificando os erros.',
+    'Situar as técnicas na história: quem criou o perceptron, as redes convolucionais, o CVAT e o YOLO, e para resolver que problema.',
     'Reconhecer essas mesmas etapas e decisões em trabalhos reais da UTFPR.',
+    'Montar um projeto completo com YOLO26 e dados do Hugging Face: contar frutas, identificar a fruta e dizer se está sadia ou estragada.',
   ],
   encontros: [],
   intervalos: [],
@@ -62,7 +66,15 @@ export const curso: Aula = {
     <><b>Ficha de um trabalho da UTFPR</b> e demonstração do modelo em fotos ou vídeo.</>,
   ],
   limitacoes: unico([...aula1.limitacoes, ...aula2.limitacoes], (x) => String((x as { props?: { children?: unknown } }).props?.children ?? x)),
-  referencias: unico([...aula1.referencias, ...aula2.referencias], (r) => r.slice(0, 40)),
+  referencias: unico([...aula1.referencias, ...aula2.referencias,
+    'SA, I.; GE, Z.; DAYOUB, F.; UPCROFT, B.; PEREZ, T.; McCOOL, C. DeepFruits: a fruit detection system using deep neural networks. Sensors, v. 16, n. 8, 1222, 2016. DOI: 10.3390/s16081222.',
+    'PROJECT AGML. Fresh rotten fruit classification. Hugging Face, 2024. Disponível em: https://huggingface.co/datasets/Project-AgML/fresh_rotten_fruit_classification. Licença CC BY 4.0.',
+    'ULTRALYTICS. Ultralytics YOLO26. Documentação, 2026. Disponível em: https://docs.ultralytics.com/models/yolo26/.',
+    'CVAT.AI. Computer Vision Annotation Tool (CVAT). Software livre, licença MIT. Disponível em: https://github.com/cvat-ai/cvat.',
+    'REDMON, J.; FARHADI, A. YOLOv3: an incremental improvement. arXiv, 1804.02767, 2018.',
+    'KRIZHEVSKY, A.; SUTSKEVER, I.; HINTON, G. E. ImageNet classification with deep convolutional neural networks. In: ADVANCES IN NEURAL INFORMATION PROCESSING SYSTEMS (NIPS), 2012. Proceedings [...]. 2012. p. 1097-1105.',
+    'ROSENBLATT, F. The perceptron: a probabilistic model for information storage and organization in the brain. Psychological Review, v. 65, n. 6, p. 386-408, 1958.',
+  ], (r) => r.slice(0, 40)),
   prof: {
     preparo: [...aula1.prof.preparo, ...aula2.prof.preparo],
     planoB: [...aula1.prof.planoB, ...aula2.prof.planoB],

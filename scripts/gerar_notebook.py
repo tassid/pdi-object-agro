@@ -32,6 +32,11 @@ Este é o único notebook da aula. Ele vai do conjunto anotado até o modelo con
 | 8 | Testar em dados de outro lugar e analisar os erros |
 | 9 | Classificação e segmentação com o mesmo código |
 | 10 | Registrar o experimento |
+| 11 | **Projeto frutas:** baixar os dados do Hugging Face |
+| 12 | **Projeto frutas:** contar e identificar a fruta (YOLO26) |
+| 13 | **Projeto frutas:** sadia ou estragada, e o pipeline completo |
+
+As partes 11 a 13 são independentes das anteriores: dá para rodar só elas, depois da parte 1.
 
 Antes de começar: **Ambiente de execução → Alterar o tipo de ambiente → GPU (T4)**.
 """)
@@ -460,6 +465,150 @@ registro = {"pesos_iniciais": "yolo11n.pt", "epocas": EPOCAS, "imgsz": 640, "bat
 json.dump(registro, open(f"{PASTA}/registro.json", "w"), indent=1, default=float)
 registro
 """)
+# ------------------------------------------------------------------ 11-13 projeto frutas
+md("""
+## 11. Projeto frutas: os dados
+
+O projeto responde três perguntas sobre fotos de pomar com o **YOLO26**, o modelo mais recente da Ultralytics (2026):
+
+1. **Quantas frutas há?** e **qual fruta é cada uma?** → detecção com `yolo26n.pt`
+2. **Cada fruta está sadia ou estragada?** → classificação com `yolo26n-cls.pt`
+3. **Tudo junto:** o detector acha e conta, e cada recorte vai para o classificador.
+
+Os dados vêm do **Hugging Face** e não pedem login:
+
+- `Project-AgML/fruit_detection_worldwide`: o conjunto DeepFruits (SA et al., 2016), 565 fotos com 3.132 caixas de 7 frutas.
+- `Project-AgML/fresh_rotten_fruit_classification`: 3.200 fotos de 8 frutas, sadias e estragadas (CC BY 4.0).
+
+> Alternativa pelo Kaggle: `kagglehub.dataset_download("dono/conjunto")` baixa conjuntos do Kaggle; alguns pedem o arquivo `kaggle.json` com a sua chave.
+""")
+py("""
+!pip -q install huggingface_hub pyarrow
+import io, glob, random, shutil, collections
+import pyarrow.parquet as pq
+from huggingface_hub import snapshot_download
+FR = "/content/frutas" if os.path.exists("/content") else os.path.abspath("frutas")
+snapshot_download("Project-AgML/fruit_detection_worldwide", repo_type="dataset", local_dir=f"{FR}/worldwide")
+snapshot_download("Project-AgML/fresh_rotten_fruit_classification", repo_type="dataset", local_dir=f"{FR}/fresh_rotten", allow_patterns=["raw/*"])
+print("baixado em", FR)
+""")
+md("""
+### Transformar no formato do YOLO
+
+As caixas do DeepFruits vêm como canto, largura e altura em pixels. A célula converte para o formato YOLO (centro, largura e altura entre 0 e 1) e separa 80% para treino, 10% para validação e 10% para teste. As fotos de sadia/estragada vão para uma pasta por classe.
+""")
+py("""
+FRUTAS = ["abacate", "melão", "maçã", "laranja", "morango", "manga", "pimentão"]
+linhas = []
+for f in sorted(glob.glob(f"{FR}/worldwide/data/*.parquet")):
+    linhas += pq.read_table(f).to_pylist()
+random.seed(0); idx = list(range(len(linhas))); random.shuffle(idx); n = len(idx)
+partes = {"train": idx[:int(.8*n)], "val": idx[int(.8*n):int(.9*n)], "test": idx[int(.9*n):]}
+DET = f"{FR}/det"; shutil.rmtree(DET, ignore_errors=True)
+for split, ids in partes.items():
+    os.makedirs(f"{DET}/images/{split}"); os.makedirs(f"{DET}/labels/{split}")
+    for i in ids:
+        r = linhas[i]; im = Image.open(io.BytesIO(r["image"]["bytes"])).convert("RGB"); W, H = im.size
+        im.save(f"{DET}/images/{split}/f{i:04d}.jpg", quality=92)
+        txt = [f"{c} {(x+w/2)/W:.6f} {(y+h/2)/H:.6f} {w/W:.6f} {h/H:.6f}"
+               for (x, y, w, h), c in zip(r["objects"]["bbox"], r["objects"]["categories"]) if w > 1 and h > 1]
+        open(f"{DET}/labels/{split}/f{i:04d}.txt", "w").write("\\n".join(txt) + "\\n")
+yaml.safe_dump({"path": DET, "train": "images/train", "val": "images/val", "test": "images/test",
+                "names": dict(enumerate(FRUTAS))}, open(f"{DET}/data.yaml", "w"), allow_unicode=True)
+print({k: len(v) for k, v in partes.items()}, "fotos")
+
+CLS = f"{FR}/cls"; shutil.rmtree(CLS, ignore_errors=True)
+grupos = collections.defaultdict(list)
+for f in sorted(glob.glob(f"{FR}/fresh_rotten/raw/*.parquet")):
+    for r in pq.read_table(f).to_pylist():
+        grupos[(r["fruit_type"], r["label"])].append(r)
+for (fruta, lab), rs in grupos.items():
+    random.shuffle(rs); n = len(rs); classe = "sadia" if lab == 0 else "estragada"
+    for split, lst in {"train": rs[:int(.8*n)], "val": rs[int(.8*n):int(.9*n)], "test": rs[int(.9*n):]}.items():
+        os.makedirs(f"{CLS}/{split}/{classe}", exist_ok=True)
+        for k, r in enumerate(lst):
+            im = Image.open(io.BytesIO(r["image"]["bytes"])).convert("RGB"); im.thumbnail((512, 512))
+            im.save(f"{CLS}/{split}/{classe}/{fruta}_{k:03d}.jpg", quality=90)
+print({s: {c: len(os.listdir(f"{CLS}/{s}/{c}")) for c in os.listdir(f"{CLS}/{s}")} for s in ("train", "val", "test")})
+""")
+
+md("""
+## 12. Contar e identificar a fruta (detecção com YOLO26)
+
+O mesmo comando de antes, com os pesos do YOLO26. Cada caixa sai com o nome da fruta; contar é somar as caixas de cada classe.
+""")
+py("""
+det_frutas = YOLO("yolo26n.pt")
+det_frutas.train(data=f"{DET}/data.yaml", epochs=60, imgsz=640, batch=16, patience=15, seed=0,
+                 project=f"{BASE}/runs", name="frutas_det", exist_ok=True)
+det_frutas = YOLO(f"{BASE}/runs/frutas_det/weights/best.pt")
+r = det_frutas.val(data=f"{DET}/data.yaml", split="test", project=f"{BASE}/runs", name="frutas_det_teste", exist_ok=True, verbose=False)
+print(f"teste: mAP50 {r.box.map50:.2f} · precisão {r.box.mp:.2f} · revocação {r.box.mr:.2f}")
+""")
+py("""
+def contar_frutas(foto, conf=0.35):
+    r = det_frutas.predict(foto, conf=conf, verbose=False)[0]
+    return collections.Counter(FRUTAS[int(c)] for c in r.boxes.cls), r
+
+for f in sorted(glob.glob(f"{DET}/images/test/*.jpg"))[:4]:
+    contagem, r = contar_frutas(f)
+    print(os.path.basename(f), dict(contagem))
+    display(Mostrar(data=cv2.imencode(".jpg", r.plot())[1].tobytes(), width=700))
+""")
+
+md("""
+## 13. Sadia ou estragada, e o pipeline completo
+
+### Classificação com YOLO26
+""")
+py("""
+cls_frutas = YOLO("yolo26n-cls.pt")
+cls_frutas.train(data=CLS, epochs=20, imgsz=224, batch=64, patience=8, seed=0,
+                 project=f"{BASE}/runs", name="frutas_cls", exist_ok=True)
+cls_frutas = YOLO(f"{BASE}/runs/frutas_cls/weights/best.pt")
+rc = cls_frutas.val(data=CLS, split="test", project=f"{BASE}/runs", name="frutas_cls_teste", exist_ok=True, verbose=False)
+print(f"acerto no teste: {rc.top1:.3f}")
+display(Mostrar(f"{BASE}/runs/frutas_cls/confusion_matrix_normalized.png", width=450))
+""")
+md("""
+### Juntando tudo
+
+O detector encontra cada fruta; o recorte de cada caixa vai para o classificador. O resultado é uma tabela por foto: quantas frutas de cada tipo, e quantas estão sadias ou estragadas.
+
+**Atenção:** o classificador aprendeu com fotos de frutas isoladas, de perto; os recortes do pomar são menores e têm folhas ao redor. É uma mudança de domínio, como a da Syrah: confira os recortes antes de confiar nos números.
+""")
+py("""
+def analisar(foto, conf=0.35):
+    im = Image.open(foto).convert("RGB")
+    r = det_frutas.predict(foto, conf=conf, verbose=False)[0]
+    tabela = collections.Counter(); desenho = np.array(im)[:, :, ::-1].copy()
+    for b, c in zip(r.boxes.xyxy.cpu().numpy().astype(int), r.boxes.cls.cpu().numpy().astype(int)):
+        rc = cls_frutas.predict(im.crop(tuple(b)), imgsz=224, verbose=False)[0]
+        estado = rc.names[rc.probs.top1]
+        tabela[(FRUTAS[c], estado)] += 1
+        cor = (60, 160, 60) if estado == "sadia" else (40, 40, 200)
+        cv2.rectangle(desenho, tuple(b[:2]), tuple(b[2:]), cor, 3)
+        cv2.putText(desenho, f"{FRUTAS[c]}: {estado}", (b[0], max(15, b[1] - 5)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor, 2)
+    return tabela, desenho
+
+relatorio = []
+for f in sorted(glob.glob(f"{DET}/images/test/*.jpg")):
+    tabela, desenho = analisar(f)
+    for (fruta, estado), n in tabela.items():
+        relatorio.append({"foto": os.path.basename(f), "fruta": fruta, "estado": estado, "quantidade": n})
+display(Mostrar(data=cv2.imencode(".jpg", desenho)[1].tobytes(), width=700))
+rel = pd.DataFrame(relatorio)
+rel.to_csv(f"{BASE}/relatorio_frutas.csv", index=False)
+rel.pivot_table(index="fruta", columns="estado", values="quantidade", aggfunc="sum", fill_value=0)
+""")
+md("""
+### Para ir além
+
+- Tire fotos de frutas da feira ou da cozinha e rode `analisar("minha_foto.jpg")`.
+- Anote no CVAT 30 fotos suas com caixas de "sadia" e "estragada" e treine um detector que faça as duas coisas de uma vez. Compare com o pipeline.
+- Teste `yolo26s.pt` (maior) e compare acerto e tempo com o `yolo26n.pt`.
+""")
+
 md("""
 ## Para a sua dupla
 

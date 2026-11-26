@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ExternalLink, Maximize2, MonitorPlay, StickyNote, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Download, ExternalLink, Maximize2, MonitorPlay, StickyNote, X } from 'lucide-react'
 import { Quiz, type Q } from './ui'
 
 /* =====================================================================
@@ -220,7 +220,7 @@ export function Exercicios({ itens }: { itens: Ex[] }) {
    SLIDES
    ===================================================================== */
 
-type DeckSlide =
+export type DeckSlide =
   | { kind: 'capa'; titulo: string; sub?: string; rodape: string; notas?: string }
   | { kind: 'secao'; kicker: string; titulo: string; sub?: string; notas?: string }
   | { kind: 'conteudo'; s: SlideSpec; secao?: string }
@@ -335,9 +335,45 @@ export function encontroDe(aula: Aula, id: string) {
 
 const notasDe = (d: DeckSlide) => (d.kind === 'conteudo' ? d.s.notas : d.notas)
 
-export function buildDeck(aula: Aula): { slides: DeckSlide[]; inicio: Record<string, number> } {
+/* ---------- figuras da página que viram slides ---------- */
+
+export function textoDe(n: React.ReactNode): string {
+  if (n === null || n === undefined || typeof n === 'boolean') return ''
+  if (typeof n === 'string' || typeof n === 'number') return String(n)
+  if (Array.isArray(n)) return n.map(textoDe).join('')
+  if (React.isValidElement(n)) return textoDe((n.props as { children?: React.ReactNode }).children)
+  return ''
+}
+
+type FigPagina = { n: string; cap: string }
+
+/** percorre o conteúdo de um bloco e devolve, em ordem, todas as figuras (Fig) e prints de trabalhos (Trabalho) */
+function figurasDe(no: React.ReactNode, out: FigPagina[] = []): FigPagina[] {
+  if (Array.isArray(no)) { no.forEach((x) => figurasDe(x, out)); return out }
+  if (!React.isValidElement(no)) return out
+  const props = no.props as Record<string, unknown>
+  if (no.type === Fig) out.push({ n: String(props.n), cap: textoDe(props.cap as React.ReactNode) })
+  else if (no.type === Trabalho) {
+    const t = props.t as TrabalhoSpec
+    out.push({ n: `artigos/${t.id}_capa`, cap: `${t.titulo}. ${t.autor.split(',')[0]}, ${t.onde}, ${t.ano}.` })
+    t.prints.forEach((pr) => out.push({ n: `artigos/${t.id}_${pr.p}`, cap: `${pr.cap} ${t.autor.split(',')[0]} (${t.ano}), ${t.onde}.` }))
+  }
+  Object.values(props).forEach((v) => { if (React.isValidElement(v) || Array.isArray(v)) figurasDe(v as React.ReactNode, out) })
+  return out
+}
+
+function tituloDe(cap: string) {
+  const limpo = cap.replace(/^Figura \d+\.\s*/, '').trim()
+  const corte = limpo.search(/[.:;](\s|$)/)
+  let t = corte > 0 ? limpo.slice(0, corte) : limpo
+  if (t.length > 62) t = t.slice(0, 60).replace(/\s+\S*$/, '') + '…'
+  return t.charAt(0).toUpperCase() + t.slice(1)
+}
+
+export function buildDeck(aula: Aula): { slides: DeckSlide[]; inicio: Record<string, number>; fim: Record<string, number> } {
   const slides: DeckSlide[] = []
   const inicio: Record<string, number> = {}
+  const fim: Record<string, number> = {}
   slides.push({ kind: 'capa', titulo: aula.titulo, sub: 'Continuação da Aula 5 (Reconhecimento de Padrões)', rodape: 'Processamento de Imagens Aplicado à Agroindústria', notas: 'Abrir com a pergunta que fecha a Aula 5: como passar de classificar um objeto isolado para encontrar e contar vários objetos numa imagem de campo?' })
   const partes = <T,>(xs: T[], n: number) => { const k = Math.ceil(xs.length / n); const t = Math.ceil(xs.length / k); return Array.from({ length: k }, (_, i) => xs.slice(i * t, (i + 1) * t)) }
   partes(aula.objetivos, 4).forEach((g, i, all) =>
@@ -348,11 +384,20 @@ export function buildDeck(aula: Aula): { slides: DeckSlide[]; inicio: Record<str
     inicio[b.id] = slides.length
     slides.push({ kind: 'secao', kicker: '', titulo: b.titulo, sub: 'teoria → exemplos → prática', notas: b.prof?.roteiro.map((r) => r[1]).join(' ') })
     b.slides.forEach((s) => slides.push({ kind: 'conteudo', s, secao: `${b.cod} ${b.titulo}` }))
+    // toda figura do texto que ainda não está nos slides do bloco ganha um slide próprio
+    const vistas = new Set(b.slides.map((s) => s.img).filter(Boolean))
+    figurasDe([b.teoria, b.exemplo, b.pratica]).forEach((f) => {
+      if (vistas.has(f.n)) return
+      vistas.add(f.n)
+      const cap = f.cap.replace(/^Figura \d+\.\s*/, '')
+      slides.push({ kind: 'conteudo', secao: `${b.cod} ${b.titulo}`, s: { titulo: tituloDe(cap), img: f.n, legenda: cap.length > 170 ? cap.slice(0, 168).replace(/\s+\S*$/, '') + '…' : cap, notas: cap } })
+    })
+    fim[b.id] = slides.length
     if (aula.intervalos.includes(b.id)) slides.push({ kind: 'secao', kicker: 'Intervalo', titulo: '20 minutos', sub: encontroDe(aula, b.id) === 2 ? 'O treinamento continua em execução na GPU.' : 'Conferir se todos têm acesso ao CVAT e ao Colab.' })
   })
   partes(aula.artigos, 6).forEach((g, i, all) =>
     slides.push({ kind: 'conteudo', s: { titulo: all.length > 1 ? `Leituras (${i + 1}/${all.length})` : 'Leituras', img: ['artigos/36152_capa', 'artigos/41807_capa', 'artigos/34166_capa', 'artigos/40855_capa'][i % 4], pontos: g.map((a) => <><b>{a.tag}</b>: {a.ref.length > 120 ? a.ref.slice(0, 118) + '…' : a.ref}</>) } }))
-  return { slides, inicio }
+  return { slides, inicio, fim }
 }
 
 /** emulador de slides embutido: tela 16:9, tira de miniaturas e notas (professor) */
@@ -507,7 +552,8 @@ function PlanoDocente({ aula }: { aula: Aula }) {
 export function AulaPage({ aula }: { aula: Aula }) {
   const prof = useModo() === 'professor'
   const [deck, setDeck] = useState<number | null>(null)
-  const { slides, inicio } = useMemo(() => buildDeck(aula), [aula])
+  const [baixando, setBaixando] = useState<number | null>(null)
+  const { slides, inicio, fim } = useMemo(() => buildDeck(aula), [aula])
   const rodape = aula.titulo
   const extras: [string, string][] = [['artigos', 'Leituras'], ['quiz', 'Avaliação formativa'], ['entregas', 'Atividade avaliativa'], ['limitacoes', 'Pressupostos e limitações'], ['referencias', 'Referências']]
   const ids = [...(prof ? ['plano'] : []), 'slides', ...aula.blocos.map((b) => b.id), ...extras.map((e) => e[0])]
@@ -536,6 +582,13 @@ export function AulaPage({ aula }: { aula: Aula }) {
           <p className="sub">Continuação da Aula 5 (Reconhecimento de Padrões){prof ? ' · visão do professor' : ''}</p>
           <div className="head-acts">
             <button className="btn-slides" onClick={() => setDeck(0)}><MonitorPlay size={16} /> Apresentar ({slides.length} slides)</button>
+            <button className="btn ghost" disabled={baixando !== null} onClick={async () => {
+              setBaixando(0)
+              try {
+                const { baixarPptx } = await import('./pptx')
+                await baixarPptx(slides, aula.titulo, prof, prof ? 'deteccao-cvat-yolo-professor.pptx' : 'deteccao-cvat-yolo.pptx', (i, n) => setBaixando(Math.round((100 * i) / n)))
+              } finally { setBaixando(null) }
+            }}><Download size={15} /> {baixando === null ? `Baixar slides (.pptx${prof ? ', com notas' : ''})` : `Gerando… ${baixando}%`}</button>
             {aula.encontros.map((e) => (
               <button key={e.n} className="btn ghost" onClick={() => setDeck(slides.findIndex((d) => d.kind === 'secao' && d.kicker.startsWith(`Encontro ${e.n} `)))}>Começar no encontro {e.n}</button>
             ))}
@@ -597,7 +650,7 @@ export function AulaPage({ aula }: { aula: Aula }) {
                 <section className="sec" id={b.id}>
                   <div className="sec-head"><span className="n">{b.cod}</span><h2>{b.titulo}</h2></div>
                   {prof && <ProfBloco b={b} />}
-                  <Emulador slides={slides.slice(inicio[b.id], inicio[b.id] + b.slides.length + 1)} inicio={inicio[b.id]} primeiro={1} rodape={rodape} onPresent={(i) => setDeck(i)} />
+                  <Emulador slides={slides.slice(inicio[b.id], fim[b.id])} inicio={inicio[b.id]} primeiro={1} rodape={rodape} onPresent={(i) => setDeck(i)} />
                   <Etapa k="teoria" cod={b.cod} i={1}>{b.teoria}</Etapa>
                   <Etapa k="exemplo" cod={b.cod} i={2}>{b.exemplo}</Etapa>
                   <Etapa k="pratica" cod={b.cod} i={3}>

@@ -268,8 +268,10 @@ names:
       tipo: 'conceito',
       slides: [
         { titulo: 'Interseção sobre união (IoU)', img: 'iou_exemplos', tex: String.raw`\mathrm{IoU}(A,B)=\frac{|A\cap B|}{|A\cup B|}`, pontos: ['Equivalente ao índice de Jaccard', 'Critério de correspondência: IoU ≥ limiar (PASCAL VOC: 0,5)'] },
+        { titulo: 'Laboratório: arraste a caixa e veja o IoU', img: 'lab_iou_cap', legenda: 'Captura do laboratório de IoU (foto do WGISD)', pontos: ['Verde: anotação · amarelo: previsão', 'O IoU muda conforme a caixa desliza'] },
         { titulo: 'Sensibilidade ao tamanho do objeto', img: 'iou_vs_deslocamento', pontos: ['Um mesmo erro absoluto reduz mais o IoU de objetos pequenos', 'Relevante para frutos, insetos, plântulas'] },
         { titulo: 'Supressão de não máximos (NMS)', img: 'nms_passos', pontos: ['1. Descartar previsões com confiança < conf', '2. Ordenar por confiança', '3. Manter a primeira; remover as que têm IoU ≥ iou com ela', '4. Repetir; executado por classe'] },
+        { titulo: 'Laboratório: limiar de confiança e NMS', img: 'lab_nms_cap', legenda: 'Captura do laboratório (saídas reais do YOLO11n)', pontos: ['Mover os dois limiares', 'Ver caixas sumindo e duplicatas saindo'] },
         { titulo: 'NMS com um modelo real', img: 'real_nms_limiares', notas: 'Saídas reais do YOLO11n treinado para este material. Com IoU 0,99 quase nada é removido; com 0,3, cachos vizinhos distintos começam a ser suprimidos.' },
         { titulo: 'Limiar de confiança com um modelo real', img: 'real_limiar_confianca', pontos: ['Limiar baixo: mais caixas, maior revocação, menor precisão', 'Limiar alto: menos caixas, maior precisão', 'Escolha na validação, nunca no teste'], notas: 'P e R no título de cada painel foram calculados contra as anotações do WGISD (IoU ≥ 0,5).' },
         { titulo: 'Caso UTFPR: excesso de contagem', img: 'artigos/41807_p26', legenda: 'Mascaro Junior (2025), UTFPR Cornélio Procópio, p. 26', pontos: ['Animais agrupados geram caixas duplicadas', 'NMS e limiar mal calibrados inflam a contagem', 'Métrica de contagem complementa o mAP'] },

@@ -5,29 +5,31 @@ Guia interativo de uma aula, continuação da **Aula 5 (Reconhecimento de Padrõ
 - Alunos: https://tassid.github.io/pdi-object-agro/
 - Professor: https://tassid.github.io/pdi-object-agro/professor/ (roteiro docente, perguntas, dificuldades frequentes, preparação, plano B, rubrica, soluções abertas e notas de cada slide no modo apresentação)
 
-Cada seção segue **teoria → exemplos → prática**, com slides integrados (emulador no próprio site, no tema visual da Aula 5), exercícios com solução e laboratórios que rodam no navegador. A tipografia segue o LaTeX (Computer Modern, fórmulas em KaTeX). As fórmulas aparecem com a explicação em palavras; o material não pede contas manuais.
+Cada seção segue **teoria → exemplos → prática**. Toda figura da página também vira slide, e o botão **Baixar slides (.pptx)** gera a apresentação no tema da Aula 5 (com as notas do professor em `/professor`), com slides integrados (emulador no próprio site, no tema visual da Aula 5), exercícios com solução e laboratórios que rodam no navegador. A tipografia segue o LaTeX (Computer Modern, fórmulas em KaTeX). As fórmulas aparecem com a explicação em palavras; o material não pede contas manuais.
 
 ## Sequência da aula
 
 1. Da Aula 5 à detecção de objetos
-2. Classificação, detecção e segmentação: etapas e diferenças
-3. As mesmas tarefas sem rede neural: cinco casos reais (laboratórios no navegador)
-4. Arquiteturas e formatos de anotação
-5. IoU, NMS, GSD e inferência com modelo pré-treinado
-6. Protocolo de anotação no CVAT
-7. Laboratório: anotação, auditoria e partição dos dados
-8. Montar o Colab do zero
-9. Treinar um YOLO
-10. Ler os resultados do treino
-11. Classificação e segmentação com YOLO na prática
-12. Laboratório: contar, rastrear e exportar
-13. Laboratório: testar em outro lugar e analisar os erros
-14. Trabalhos reais da UTFPR, passo a passo
-15. Projeto da dupla e orientações
+2. Linha do tempo: de onde vieram as técnicas, o CVAT e o YOLO
+3. Classificação, detecção e segmentação: etapas e diferenças
+4. As mesmas tarefas sem rede neural: cinco casos reais (laboratórios no navegador)
+5. Arquiteturas e formatos de anotação
+6. IoU, NMS, GSD e inferência com modelo pré-treinado
+7. Protocolo de anotação no CVAT
+8. Laboratório: anotação, auditoria e partição dos dados
+9. Montar o Colab do zero
+10. Treinar um YOLO
+11. Ler os resultados do treino
+12. Classificação e segmentação com YOLO na prática
+13. Laboratório: contar, rastrear e exportar
+14. Laboratório: testar em outro lugar e analisar os erros
+15. Trabalhos reais da UTFPR, passo a passo
+16. Projeto: contar frutas, saber qual é e se está estragada, com YOLO26
+17. Projeto da dupla e orientações
 
 ## Notebook
 
-Um único Colab, do dado anotado ao modelo em uso:
+Um único Colab, do dado anotado ao modelo em uso. As partes 11 a 13 são o projeto das frutas com YOLO26, com dados baixados do Hugging Face:
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tassid/pdi-object-agro/blob/main/notebooks/CVAT_YOLO_na_pratica.ipynb)
 
@@ -44,6 +46,10 @@ pip install ultralytics opencv-python matplotlib pillow
 python scripts/treinar_wgisd.py --dados ./trabalho     # baixa o WGISD, monta as partições, treina 3 modelos (~25 min numa RTX 5060 Ti)
 python scripts/treinar_tarefas.py --dados ./trabalho   # classificação (variedade do cacho) e segmentação de instâncias
 python scripts/figuras_reais.py --dados ./trabalho     # gera public/fig/real_*.jpg, aula5_*.jpg e src/resultados.json
+python scripts/projeto_frutas.py --dados ./trabalho/frutas   # projeto das frutas: baixa do Hugging Face e treina YOLO26 (detecção e classificação)
+python scripts/figuras_frutas.py --dados ./trabalho/frutas   # figuras do projeto das frutas
+python scripts/gerar_timeline.py                       # linhas do tempo
+python scripts/gerar_esquemas.py                       # esquemas (Colab, pasta do YOLO, fluxo)
 python scripts/gerar_figuras.py                        # figuras didáticas (IoU, formatos, convolução etc.) a partir das fotos do WGISD e do CWFID
 ```
 
