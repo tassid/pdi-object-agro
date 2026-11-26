@@ -4,3 +4,4 @@ dist
 scripts/dados/
 *.pt
 runs/
+__pycache__/
