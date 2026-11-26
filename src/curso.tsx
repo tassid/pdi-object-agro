@@ -247,7 +247,7 @@ export function SlideView({ d, n, rodape }: { d: DeckSlide; n: number; rodape?: 
     return (
       <div className={`slide capa ${d.kind === 'secao' ? 'secao' : ''}`}>
         <div className="c-top">
-          {d.kind === 'secao' && <p className="kicker">{d.kicker}</p>}
+          {d.kind === 'secao' && d.kicker && <p className="kicker">{d.kicker}</p>}
           <h2>{d.titulo}</h2>
           {d.sub && <p>{d.sub}</p>}
         </div>
@@ -338,7 +338,7 @@ const notasDe = (d: DeckSlide) => (d.kind === 'conteudo' ? d.s.notas : d.notas)
 export function buildDeck(aula: Aula): { slides: DeckSlide[]; inicio: Record<string, number> } {
   const slides: DeckSlide[] = []
   const inicio: Record<string, number> = {}
-  slides.push({ kind: 'capa', titulo: aula.titulo, sub: `2 encontros de 5 horas · continuação da Aula 5 (Reconhecimento de Padrões)`, rodape: 'Processamento de Imagens Aplicado à Agroindústria', notas: 'Abrir com a pergunta que fecha a Aula 5: como passar de classificar um objeto isolado para encontrar e contar vários objetos numa imagem de campo?' })
+  slides.push({ kind: 'capa', titulo: aula.titulo, sub: 'Continuação da Aula 5 (Reconhecimento de Padrões)', rodape: 'Processamento de Imagens Aplicado à Agroindústria', notas: 'Abrir com a pergunta que fecha a Aula 5: como passar de classificar um objeto isolado para encontrar e contar vários objetos numa imagem de campo?' })
   const partes = <T,>(xs: T[], n: number) => { const k = Math.ceil(xs.length / n); const t = Math.ceil(xs.length / k); return Array.from({ length: k }, (_, i) => xs.slice(i * t, (i + 1) * t)) }
   partes(aula.objetivos, 4).forEach((g, i, all) =>
     slides.push({ kind: 'conteudo', s: { titulo: all.length > 1 ? `Objetivos (${i + 1}/${all.length})` : 'Objetivos', pontos: g.map((o) => o.replace(/\.$/, '')), notas: 'Ler os objetivos em voz alta e indicar em qual bloco cada um é avaliado.' } }))
@@ -346,7 +346,7 @@ export function buildDeck(aula: Aula): { slides: DeckSlide[]; inicio: Record<str
     const enc = aula.encontros.find((e) => e.inicio === b.id)
     if (enc) slides.push({ kind: 'secao', kicker: `Encontro ${enc.n} de ${aula.encontros.length} · 300 min`, titulo: enc.titulo, sub: 'Processamento de Imagens Aplicado à Agroindústria' })
     inicio[b.id] = slides.length
-    slides.push({ kind: 'secao', kicker: `Bloco ${b.cod} · ${b.min} min`, titulo: b.titulo, sub: 'teoria → exemplos → prática', notas: b.prof?.roteiro.map((r) => `${r[0]}: ${r[1]}`).join(' · ') })
+    slides.push({ kind: 'secao', kicker: '', titulo: b.titulo, sub: 'teoria → exemplos → prática', notas: b.prof?.roteiro.map((r) => r[1]).join(' ') })
     b.slides.forEach((s) => slides.push({ kind: 'conteudo', s, secao: `${b.cod} ${b.titulo}` }))
     if (aula.intervalos.includes(b.id)) slides.push({ kind: 'secao', kicker: 'Intervalo', titulo: '20 minutos', sub: encontroDe(aula, b.id) === 2 ? 'O treinamento continua em execução na GPU.' : 'Conferir se todos têm acesso ao CVAT e ao Colab.' })
   })
@@ -474,61 +474,11 @@ function ProfBloco({ b }: { b: Bloco }) {
   const p = b.prof
   return (
     <div className="prof-box">
-      <h4>Roteiro docente do bloco {b.cod} ({b.min} min)</h4>
-      <table className="tbl">
-        <thead><tr><th style={{ width: '18%' }}>tempo</th><th>condução</th></tr></thead>
-        <tbody>{p.roteiro.map(([t, o], i) => <tr key={i}><td>{t}</td><td>{o}</td></tr>)}</tbody>
-      </table>
+      <h4>Roteiro docente</h4>
+      <ol>{p.roteiro.map(([, o], i) => <li key={i}>{o}</li>)}</ol>
       {p.perguntas && (<><h5>Perguntas para a turma</h5><ol>{p.perguntas.map((q, i) => <li key={i}>{q}</li>)}</ol></>)}
       {p.erros && (<><h5>Dificuldades frequentes</h5><ul>{p.erros.map((q, i) => <li key={i}>{q}</li>)}</ul></>)}
       {p.materiais && (<><h5>Materiais</h5><ul>{p.materiais.map((q, i) => <li key={i}>{q}</li>)}</ul></>)}
-    </div>
-  )
-}
-
-/* =====================================================================
-   cronograma
-   ===================================================================== */
-
-const COR = { conceito: '#ebddc3', lab: '#94b6d2', leitura: '#f0c4a4', pausa: 'repeating-linear-gradient(45deg,#fff 0 5px,#ddd 5px 10px)' }
-const hm = (m: number) => `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`
-
-type Item = { t: string; cod: string; min: number; tipo: keyof typeof COR; id?: string; ini: number }
-
-function itensDo(aula: Aula, enc: number) {
-  const itens: Item[] = []
-  let t0 = 0
-  aula.blocos.filter((b) => encontroDe(aula, b.id) === enc).forEach((b) => {
-    itens.push({ t: b.titulo, cod: b.cod, min: b.min, tipo: b.tipo, id: b.id, ini: t0 }); t0 += b.min
-    if (aula.intervalos.includes(b.id)) { itens.push({ t: 'Intervalo', cod: '—', min: 20, tipo: 'pausa', ini: t0 }); t0 += 20 }
-  })
-  return { itens, total: t0 }
-}
-
-function Roteiro({ aula }: { aula: Aula }) {
-  return <>{aula.encontros.map((e) => <RoteiroEnc key={e.n} aula={aula} enc={e.n} titulo={e.titulo} />)}</>
-}
-
-function RoteiroEnc({ aula, enc, titulo }: { aula: Aula; enc: number; titulo: string }) {
-  const { itens, total } = itensDo(aula, enc)
-  return (
-    <div className="roteiro">
-      <p className="roteiro-t"><b>Encontro {enc}.</b> {titulo}</p>
-      <div className="roteiro-bar">
-        {itens.map((s, i) => (
-          <a key={i} href={s.id ? `#${s.id}` : undefined} style={{ flex: s.min, background: COR[s.tipo] }} title={`${hm(s.ini)}–${hm(s.ini + s.min)} · ${s.t}`}
-            onClick={(e) => { if (s.id) { e.preventDefault(); document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth' }) } }}>
-            {s.cod !== '—' ? s.cod : ''} {s.min}′
-          </a>
-        ))}
-      </div>
-      <div className="roteiro-legend">
-        <span>Total: {total} min</span>
-        <span><i style={{ background: COR.conceito }} />conceito</span>
-        <span><i style={{ background: COR.lab }} />laboratório</span>
-        <span><i style={{ background: COR.leitura }} />leitura</span>
-        <span><i style={{ background: COR.pausa }} />intervalo</span>
-      </div>
     </div>
   )
 }
@@ -538,37 +488,15 @@ function PlanoDocente({ aula }: { aula: Aula }) {
     <section className="sec" id="plano">
       <div className="sec-head"><span className="n">0</span><h2>Plano docente</h2><span className="min">visível só em /professor</span></div>
       <div className="prof-box" style={{ maxWidth: 'none' }}>
-        {aula.encontros.map((e) => <TabelaEnc key={e.n} aula={aula} enc={e.n} titulo={e.titulo} />)}
-        <h5>Preparação antes dos encontros</h5>
+        <h4>Sequência da aula</h4>
+        <ol>{aula.blocos.map((b) => <li key={b.id}>{b.titulo}{b.prof ? `: ${b.prof.roteiro.map((r) => r[1].split('.')[0]).slice(0, 2).join('; ')}.` : ''}</li>)}</ol>
+        <h5>Preparação antes da aula</h5>
         <ol>{aula.prof.preparo.map((p, i) => <li key={i}>{p}</li>)}</ol>
         <h5>Plano B (sem GPU, sem internet ou com CVAT fora do ar)</h5>
         <ul>{aula.prof.planoB.map((p, i) => <li key={i}>{p}</li>)}</ul>
         {aula.prof.avaliacao}
       </div>
     </section>
-  )
-}
-
-function TabelaEnc({ aula, enc, titulo }: { aula: Aula; enc: number; titulo: string }) {
-  const { itens } = itensDo(aula, enc)
-  return (
-      <>
-        <h4>Encontro {enc}: {titulo}</h4>
-        <table className="tbl">
-          <thead><tr><th>início</th><th>duração</th><th>bloco</th><th>conteúdo e estratégia</th></tr></thead>
-          <tbody>
-            {itens.map((s, i) => {
-              const b = aula.blocos.find((x) => x.id === s.id)
-              return (
-                <tr key={i}>
-                  <td>{hm(s.ini)}</td><td>{s.min} min</td><td>{s.cod}</td>
-                  <td>{s.t}{b?.prof ? `. ${b.prof.roteiro.map((r) => r[1].split('.')[0]).slice(0, 3).join('; ')}.` : s.tipo === 'pausa' ? (enc === 2 ? '. O treino segue na GPU.' : '. Checagem dos acessos ao CVAT e ao Colab.') : ''}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </>
   )
 }
 
@@ -605,7 +533,7 @@ export function AulaPage({ aula }: { aula: Aula }) {
       <div className="wrap">
         <header className="lesson-head">
           <h1>{aula.titulo}</h1>
-          <p className="sub">2 encontros de 300 minutos, cada um com intervalo de 20 minutos · continuação da Aula 5{prof ? ' · visão do professor' : ''}</p>
+          <p className="sub">Continuação da Aula 5 (Reconhecimento de Padrões){prof ? ' · visão do professor' : ''}</p>
           <div className="head-acts">
             <button className="btn-slides" onClick={() => setDeck(0)}><MonitorPlay size={16} /> Apresentar ({slides.length} slides)</button>
             {aula.encontros.map((e) => (
@@ -614,11 +542,10 @@ export function AulaPage({ aula }: { aula: Aula }) {
           </div>
           <div className="bigidea"><b>Resumo.</b> {aula.ideia}</div>
           <p className="chips"><b>Palavras-chave:</b> {aula.chips.join('; ')}.</p>
-          <Roteiro aula={aula} />
           <div className="head-cols">
             <div>
               <p style={{ fontWeight: 700, marginBottom: 6 }}>Objetivos de aprendizagem</p>
-              <p style={{ marginBottom: 6 }}>Ao final dos dois encontros, o estudante deverá ser capaz de:</p>
+              <p style={{ marginBottom: 6 }}>Ao final da aula, o estudante deverá ser capaz de:</p>
               <ol className="objs">{aula.objetivos.map((o) => <li key={o}>{o}</li>)}</ol>
             </div>
             <div style={{ display: 'grid', gap: 12 }}>
@@ -647,7 +574,6 @@ export function AulaPage({ aula }: { aula: Aula }) {
                   </React.Fragment>
                 )
               })}
-              <li className="toc-enc">Fechamento</li>
               {extras.map(([id, t], i) => (
                 <li key={id}><a href={`#${id}`} onClick={go(id)} className={on === id ? 'on' : ''}><span className="n">{nExtra + i}</span><span>{t}</span></a></li>
               ))}
@@ -658,7 +584,7 @@ export function AulaPage({ aula }: { aula: Aula }) {
             <section className="sec" id="slides">
               <div className="sec-head"><h2>Slides</h2><span className="min">{slides.length} slides</span></div>
               <p className="prose">
-                Os slides abaixo reúnem os dois encontros. Clique na tela ou use as setas para avançar; <i>apresentar</i> abre o modo de tela cheia (tecla F).
+                Os slides abaixo reúnem a aula inteira. Clique na tela ou use as setas para avançar; <i>apresentar</i> abre o modo de tela cheia (tecla F).
                 {prof ? ' Na visão do professor, as notas de cada slide aparecem abaixo da tela e, no modo apresentação, ao lado, com o próximo slide e o cronômetro (tecla P alterna).' : ' Cada bloco também tem o seu conjunto de slides junto do texto.'}
               </p>
               <Emulador slides={slides} rodape={rodape} onPresent={(i) => setDeck(i)} />
@@ -669,7 +595,7 @@ export function AulaPage({ aula }: { aula: Aula }) {
                   <div key={e.n} className="encontro" id={`encontro${e.n}`}><h2>Encontro {e.n}: {e.titulo}</h2></div>
                 ))}
                 <section className="sec" id={b.id}>
-                  <div className="sec-head"><span className="n">{b.cod}</span><h2>{b.titulo}</h2><span className="min">{b.min} min</span></div>
+                  <div className="sec-head"><span className="n">{b.cod}</span><h2>{b.titulo}</h2></div>
                   {prof && <ProfBloco b={b} />}
                   <Emulador slides={slides.slice(inicio[b.id], inicio[b.id] + b.slides.length + 1)} inicio={inicio[b.id]} primeiro={1} rodape={rodape} onPresent={(i) => setDeck(i)} />
                   <Etapa k="teoria" cod={b.cod} i={1}>{b.teoria}</Etapa>

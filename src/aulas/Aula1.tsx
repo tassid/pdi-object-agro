@@ -18,15 +18,15 @@ export const aula1 = comProf(PROF1, {
     'Distinguir classificação, detecção, segmentação semântica e segmentação de instâncias, e justificar a escolha da tarefa em função da pergunta agronômica e do custo de anotação.',
     'Descrever a organização de detectores de dois estágios (família R-CNN), de um estágio (família YOLO) e baseados em transformers (DETR), bem como da U-Net para segmentação.',
     'Converter caixas delimitadoras entre as representações xyxy, COCO e YOLO, e descrever a representação poligonal usada em segmentação de instâncias.',
-    'Calcular a interseção sobre união (IoU) e executar manualmente a supressão de não máximos (NMS), analisando o efeito dos limiares de confiança e de IoU.',
-    'Calcular a distância de amostragem no solo (GSD) e estimar a resolução efetiva de um objeto na entrada da rede.',
+    'Explicar a interseção sobre união (IoU) e a supressão de não máximos (NMS), e o efeito dos limiares de confiança e de IoU.',
+    'Explicar como a distância de amostragem no solo (GSD) e o tamanho de entrada afetam objetos pequenos.',
     'Elaborar um protocolo de anotação, medir a concordância entre anotadores e auditar um conjunto rotulado.',
     'Particionar um conjunto de imagens por grupo de coleta, evitando vazamento de dados entre treino, validação e teste.',
   ],
   intervaloDepois: 'b13',
   notebook: {
-    nome: 'Aula1_Anotacao_Auditoria_Split.ipynb',
-    arquivo: 'Aula1_Anotacao_Auditoria_Split.ipynb',
+    nome: 'CVAT_YOLO_na_pratica.ipynb',
+    arquivo: 'CVAT_YOLO_na_pratica.ipynb',
     descricao: 'Obtenção do WGISD, conversão de formatos, cálculo de GSD, IoU e NMS, auditoria de rótulos, estatísticas descritivas, concordância entre anotadores e partição por variedade.',
   },
   blocos: [
@@ -136,7 +136,6 @@ print("ExG médio:", exg.mean().round(3))`} />
         { nivel: 'básico', q: 'Estimar o número de aves mortas em um aviário a partir de uma câmera fixa no teto. Qual tarefa é adequada?', r: <p>Detecção, pois a pergunta envolve localização e contagem de objetos individuais; a caixa delimitadora é suficiente. A classificação não fornece contagem e a segmentação impõe custo de anotação sem ganho para a pergunta.</p> },
         { nivel: 'básico', q: 'Estimar a porcentagem de área foliar com lesões de ferrugem na soja. Qual tarefa é adequada?', r: <p>Segmentação semântica, pois a variável de interesse é uma área. Não é necessário distinguir lesões individuais.</p> },
         { nivel: 'médio', q: 'Separar grãos de café conformes e defeituosos em uma esteira, com uma imagem por grão.', r: <p>Classificação, pois cada imagem contém um único objeto. Se a imagem contivesse vários grãos, a tarefa passaria a ser detecção.</p> },
-        { nivel: 'médio', q: 'Calcular o número de bytes de uma imagem RGB de 8 bits com 2048 × 1365 pixels e da mesma imagem reduzida para 640 × 427.', r: <p>2048 × 1365 × 3 = 8.386.560 bytes; 640 × 427 × 3 = 819.840 bytes. A redução corresponde a cerca de 10,2 vezes menos informação na entrada do modelo, o que afeta principalmente objetos pequenos.</p> },
         { nivel: 'desafio', q: 'Um pulverizador seletivo possui bicos espaçados de 25 cm. Discutir se detecção ou segmentação é mais adequada para acioná-los.', r: <p>Com resolução de atuação de 25 cm, basta identificar em qual faixa há planta daninha; a caixa delimitadora fornece essa informação com menor custo de anotação. A segmentação seria justificável com atuadores de maior resolução ou quando a dose depende da área foliar.</p> },
       ],
     },
@@ -174,8 +173,8 @@ print("ExG médio:", exg.mean().round(3))`} />
           <ol>
             <li><b>Extrator de características</b> (backbone): rede convolucional que produz mapas de características em resoluções decrescentes.</li>
             <li>
-              <b>Pescoço</b> (neck): combina mapas de diferentes resoluções, em arranjo derivado das redes de pirâmide de características (LIN et al., 2017). Para entrada de 640 × 640, os níveis
-              P3, P4 e P5 têm passos (strides) de 8, 16 e 32 pixels, isto é, grades de 80 × 80, 40 × 40 e 20 × 20, totalizando 8.400 posições de previsão.
+              <b>Pescoço</b> (neck): combina mapas de diferentes resoluções, em arranjo derivado das redes de pirâmide de características (LIN et al., 2017). Os níveis
+              P3, P4 e P5 olham a imagem em três escalas: o primeiro enxerga objetos pequenos, o último, objetos grandes.
             </li>
             <li><b>Cabeças</b> (heads): em cada posição, estimam a caixa, a classe e a confiança.</li>
           </ol>
@@ -206,8 +205,8 @@ print("ExG médio:", exg.mean().round(3))`} />
             <li><b>YOLO-seg</b>: <code>classe x1 y1 … xn yn</code>, com os vértices do polígono normalizados.</li>
           </ol>
           <p>
-            <b>Exemplo resolvido.</b> Imagem de 2048 × 1365 pixels e caixa xyxy (479, 365, 866, 638). Largura 387, altura 273, centro (672,5; 501,5). Em YOLO: x<sub>c</sub> = 0,3284;
-            y<sub>c</sub> = 0,3674; w = 0,1890; h = 0,2000. Em COCO: [479, 365, 387, 273].
+            Em palavras: o formato YOLO guarda o <b>centro</b> da caixa e o seu tamanho, sempre como fração da largura e da altura da foto (números entre 0 e 1). Por isso a mesma linha vale
+            para a foto original e para a foto reduzida. Na prática, quem faz essa conversão é o CVAT, na exportação; o importante é saber ler o arquivo e conferir as caixas desenhadas.
           </p>
         </>
       ),
@@ -219,6 +218,15 @@ print("ExG médio:", exg.mean().round(3))`} />
           <Fig n="ancora_vs_livre" cap="Formulação com âncoras (caixas tracejadas) e sem âncoras (distâncias l, t, r, b a partir de um ponto)." />
           <Fig n="unet_cwfid" cap="Rótulo por pixel do CWFID (cultura e planta daninha), correspondente à saída esperada de uma U-Net." />
           <Fig n="formatos_caixa" cap="Uma caixa do WGISD nas representações xyxy, COCO e YOLO." />
+          <h4>O que a rede faz com a imagem</h4>
+          <p>
+            A operação básica de uma rede convolucional é a mesma dos filtros clássicos de processamento de imagens: uma pequena janela desliza sobre a foto e combina os pixels
+            vizinhos, realçando bordas, texturas ou manchas. A diferença é quem define os valores dessa janela: no método clássico, o projetista; na rede, o treino.
+          </p>
+          <Fig n="conv_passo" cap="A janela desliza sobre a imagem e produz um novo mapa, em que as bordas ficam destacadas. Numa rede, os valores da janela não são escolhidos à mão: eles são aprendidos a partir dos exemplos anotados." />
+          <Fig n="filtros_conv" cap="Filtros clássicos aplicados a uma foto de campo: cada um realça uma coisa diferente (bordas verticais, horizontais, detalhe fino, suavização). Uma camada de rede aprende dezenas de filtros como esses." />
+          <Fig n="mapas_caracteristicas" cap="Empilhando camadas, a rede vai do simples ao complexo: as primeiras respondem a bordas e texturas; as seguintes, a padrões maiores, como a forma de um cacho." />
+          <Fig n="ativacoes" w={620} cap="Entre uma camada e outra existe uma função que decide o quanto cada resposta passa adiante. É ela que permite à rede aprender fronteiras curvas, e não apenas retas." />
           <Fig n="mascara_poligono" cap="Máscara de instância do WGISD convertida em polígono (cv2.findContours e cv2.approxPolyDP)." />
           <Callout kind="pegadinha">
             <p>No formato YOLO, as coordenadas referem-se ao centro da caixa. A exportação de cantos normalizados sob esse formato não gera erro de execução, mas invalida o treinamento; por isso, a conversão deve ser verificada visualmente antes do treino.</p>
@@ -248,10 +256,6 @@ names:
         </>
       ),
       exercicios: [
-        { nivel: 'básico', q: 'Imagem de 1280 × 720 pixels; objeto entre (400, 200) e (560, 330). Escrever a caixa em COCO e em YOLO (classe 0).', r: <p>COCO: [400, 200, 160, 130]. YOLO: 0 0.3750 0.3681 0.1250 0.1806.</p> },
-        { nivel: 'básico', q: 'Dada a linha YOLO "0 0.5 0.5 0.2 0.4" em uma imagem de 1000 × 500, determinar os cantos em pixels.', r: <p>Centro (500, 250), largura 200, altura 200. Cantos: (400, 150) e (600, 350).</p> },
-        { nivel: 'médio', q: 'Com entrada 640 × 640 e passos 8, 16 e 32, quantas posições de previsão existem? E com entrada 1280 × 1280?', r: <p>640: 80² + 40² + 20² = 8.400. 1280: 160² + 80² + 40² = 33.600, quatro vezes mais posições e custo computacional aproximadamente proporcional.</p> },
-        { nivel: 'médio', q: 'A linha "0 0.10 0.20 0.30 0.40" foi exportada como YOLO, mas contém cantos normalizados (x1 y1 x2 y2). Qual seria a linha correta?', r: <p>x<sub>c</sub> = 0,20; y<sub>c</sub> = 0,30; w = 0,20; h = 0,20. Linha correta: 0 0.20 0.30 0.20 0.20.</p> },
         { nivel: 'desafio', q: 'Discutir critérios para escolher entre um detector de dois estágios, um de um estágio e um baseado em transformer em uma aplicação embarcada em trator.', r: <p>Os critérios incluem latência no hardware de destino, memória disponível, tamanho típico dos objetos e acurácia exigida. A literatura mostra que o compromisso depende de extrator, resolução e implementação (HUANG et al., 2017; ZHAO et al., 2024); a decisão deve se apoiar em medições no próprio conjunto de validação e no dispositivo de execução.</p> },
       ],
     },
@@ -264,7 +268,6 @@ names:
       tipo: 'conceito',
       slides: [
         { titulo: 'Interseção sobre união (IoU)', img: 'iou_exemplos', tex: String.raw`\mathrm{IoU}(A,B)=\frac{|A\cap B|}{|A\cup B|}`, pontos: ['Equivalente ao índice de Jaccard', 'Critério de correspondência: IoU ≥ limiar (PASCAL VOC: 0,5)'] },
-        { titulo: 'Exemplo resolvido', formula: <>A = (100,100,200,200) · B = (150,120,250,220)</>, pontos: ['Interseção: 50 × 80 = 4.000', 'União: 10.000 + 10.000 − 4.000 = 16.000', 'IoU = 0,25'] },
         { titulo: 'Sensibilidade ao tamanho do objeto', img: 'iou_vs_deslocamento', pontos: ['Um mesmo erro absoluto reduz mais o IoU de objetos pequenos', 'Relevante para frutos, insetos, plântulas'] },
         { titulo: 'Supressão de não máximos (NMS)', img: 'nms_passos', pontos: ['1. Descartar previsões com confiança < conf', '2. Ordenar por confiança', '3. Manter a primeira; remover as que têm IoU ≥ iou com ela', '4. Repetir; executado por classe'] },
         { titulo: 'NMS com um modelo real', img: 'real_nms_limiares', notas: 'Saídas reais do YOLO11n treinado para este material. Com IoU 0,99 quase nada é removido; com 0,3, cachos vizinhos distintos começam a ser suprimidos.' },
@@ -282,11 +285,11 @@ names:
             considerada verdadeiro positivo (TP) quando seu IoU com uma anotação ainda não associada é maior ou igual a um limiar; o protocolo do PASCAL VOC adota 0,5 (EVERINGHAM et al., 2010) e o do
             COCO calcula a média em dez limiares, de 0,50 a 0,95 (LIN et al., 2014). Previsões sem correspondência são falsos positivos (FP) e anotações sem correspondência, falsos negativos (FN).
           </p>
-          <Thm k="def" n="6" nome="interseção sobre união">Sejam <M t="A=(x_1^A,y_1^A,x_2^A,y_2^A)" /> e <M t="B" /> duas caixas no formato xyxy. A área de interseção e o IoU são</Thm>
-          <MM n="4" t={String.raw`I=\max\bigl(0,\min(x_2^A,x_2^B)-\max(x_1^A,x_1^B)\bigr)\cdot\max\bigl(0,\min(y_2^A,y_2^B)-\max(y_1^A,y_1^B)\bigr),\qquad \mathrm{IoU}=\frac{I}{|A|+|B|-I}.`} />
+          <Thm k="def" n="6" nome="interseção sobre união">Para uma caixa prevista <M t="A" /> e uma caixa anotada <M t="B" />,</Thm>
+          <MM n="4" t={String.raw`\mathrm{IoU}(A,B)=\frac{\text{área da sobreposição}}{\text{área total coberta pelas duas}}`} />
           <p>
-            Como o IoU é uma razão de áreas, o mesmo erro absoluto de localização produz reduções maiores em objetos pequenos: um deslocamento diagonal de 10 pixels resulta em IoU de 0,82 para um
-            objeto de 200 × 200 pixels e de 0,21 para um objeto de 24 × 24 pixels (ver a figura do IoU em função do deslocamento, nos exemplos).
+            O IoU vai de 0 (as caixas nem se tocam) a 1 (caixas idênticas). A partir de 0,5 a previsão costuma ser aceita como acerto. Como é uma razão de áreas, o mesmo
+            deslize de alguns pixels derruba muito mais o IoU de um objeto pequeno do que o de um objeto grande, como mostra a figura dos três tamanhos nos exemplos.
           </p>
           <h4>Supressão de não máximos</h4>
           <p>
@@ -297,10 +300,13 @@ names:
           </p>
           <h4>Distância de amostragem no solo</h4>
           <p>
-            A distância de amostragem no solo (GSD) é a dimensão, no terreno, representada por um pixel: GSD = H · p / f, em que H é a altura de voo, p o tamanho do pixel do sensor e f a distância
-            focal. Para H = 40 m, p = 2,4 µm e f = 8,8 mm, obtém-se GSD ≈ 1,1 cm/pixel; um objeto de 15 cm ocupa então cerca de 14 pixels. Se a imagem de 5.472 pixels de largura for reduzida para 640
-            pixels na entrada da rede, o mesmo objeto passa a ocupar menos de 2 pixels. O planejamento da coleta e a escolha da resolução de entrada devem, portanto, considerar o tamanho dos objetos de
-            interesse.
+            A distância de amostragem no solo (GSD) é a dimensão, no terreno, representada por um pixel:
+          </p>
+          <MM t={String.raw`\mathrm{GSD}=\frac{H\cdot p}{f}`} />
+          <p>
+            em que <M t="H" /> é a altura de voo, <M t="p" /> o tamanho do pixel do sensor e <M t="f" /> a distância focal. Quanto mais alto o voo, maior a GSD e menos pixels cada objeto ocupa. E
+            há uma segunda perda: a rede reduz a foto para o tamanho de entrada (640 pixels, por padrão), o que encolhe ainda mais os objetos. Por isso a altura de voo e o tamanho de entrada
+            devem ser escolhidos pensando no menor objeto que precisa ser encontrado.
           </p>
         </>
       ),
@@ -308,6 +314,10 @@ names:
         <>
           <Fig n="iou_exemplos" cap="Três previsões sobre um cacho anotado do WGISD e respectivos valores de IoU." />
           <Fig n="iou_vs_deslocamento" cap="IoU em função do deslocamento para objetos de 24, 64 e 200 pixels (cálculo analítico)." />
+          <Fig n="iou_pequeno" cap="O mesmo deslize de poucos pixels quase não muda o IoU de um cacho grande, mas derruba o de uma baga pequena. Por isso objetos pequenos exigem mais cuidado com a resolução e com a qualidade da anotação." />
+          <Fig n="map_limiares" w={680} cap="A nota mAP50 aceita caixas razoavelmente encaixadas; a mAP50–95 cobra encaixe cada vez mais justo. A mesma previsão conta como acerto nos limiares mais frouxos e como erro nos mais rígidos." />
+          <Fig n="nms_antes_depois" cap="Antes e depois da limpeza: o detector devolve muitas caixas sobre o mesmo cacho (esquerda) e o NMS mantém só a melhor de cada grupo (direita)." />
+          <Fig n="conf_limiares" cap="Subindo o limiar de confiança, o modelo desenha menos caixas: erra menos, mas também deixa passar objetos. A escolha do limiar é feita na validação." />
           <Fig n="nms_passos" cap="Execução do NMS passo a passo sobre três cachos vizinhos, com caixas candidatas construídas para mostrar cada etapa do algoritmo." />
           <Fig n="real_nms_limiares" cap="Saídas reais do YOLO11n ajustado no WGISD (experimento A) numa imagem de teste, com três limiares de IoU do NMS. Com 0,99 quase nada é suprimido e surgem duplicatas; com 0,3, cachos vizinhos distintos passam a ser removidos." />
           <Fig n="real_limiar_confianca" cap="Mesmo modelo e quatro limiares de confiança. Azul: caixa que corresponde a um cacho anotado (IoU ≥ 0,5); laranja: falso positivo. P e R calculados contra as anotações do WGISD." />
@@ -333,10 +343,6 @@ for conf in [0.05, 0.25, 0.5]:
         </>
       ),
       exercicios: [
-        { nivel: 'básico', q: 'Calcular o IoU entre duas caixas de 100 × 100 pixels deslocadas 50 pixels na horizontal.', r: <p>Interseção 5.000; união 15.000; IoU = 0,33.</p> },
-        { nivel: 'básico', q: 'Uma caixa prevista está contida na caixa de referência e tem metade de sua área. Qual o IoU?', r: <p>Interseção = 0,5A e união = A; IoU = 0,5.</p> },
-        { nivel: 'médio', q: 'Previsões com confiança A 0,9; B 0,8; C 0,7; D 0,3. IoU(A,B) = 0,7; IoU(A,C) = 0,2; IoU(B,C) = 0,6; D sem sobreposição. Com conf = 0,25 e limiar de NMS 0,5, quais previsões permanecem?', r: <p>A é mantida; B é removida (0,7 ≥ 0,5); C permanece (0,2 em relação a A); D permanece. Resultado: A, C e D. B não remove C porque já foi eliminada.</p> },
-        { nivel: 'médio', q: 'Calcular o GSD para H = 60 m, p = 3,3 µm e f = 10 mm, e o número de pixels ocupados por uma plântula de 5 cm.', r: <p>GSD = 60 × 3,3 / 10 = 19,8 mm/pixel ≈ 2 cm/pixel; a plântula ocupa cerca de 2,5 pixels, valor insuficiente para detecção confiável. Seria necessário reduzir a altura de voo ou usar maior distância focal.</p> },
         { nivel: 'desafio', q: 'Em um pomar com copas contíguas, o NMS com limiar 0,7 mantém duplicatas e com limiar 0,3 remove árvores distintas. Propor alternativas e um critério de avaliação.', r: <p>Alternativas: limiar intermediário selecionado na validação, Soft-NMS (BODLA et al., 2017), segmentação de instâncias, métodos baseados em densidade (OSCO et al., 2020) ou detectores sem NMS (CARION et al., 2020). O critério deve refletir a finalidade, por exemplo o erro absoluto de contagem por parcela.</p> },
       ],
     },
@@ -399,7 +405,7 @@ for conf in [0.05, 0.25, 0.5]:
           <Fig n="cvat/export_job_as_dataset_dialog" w={520} cap="Exportação do job como conjunto de dados. Em Export format, trocar o padrão (CVAT for images) por Ultralytics YOLO Detection e ligar Save images. Fonte: documentação do CVAT." />
           <h4>Um protocolo real: armadilha McPhail</h4>
           <p>Na dissertação de Medeiros (2025), do PPGTCA, a anotação das moscas-das-frutas exigiu definir antes uma região de interesse na armadilha e um critério para insetos pequenos e parcialmente visíveis. O falso positivo de campo (p. 62) mostra o que acontece quando um caso não previsto no protocolo aparece.</p>
-          <Fig n="artigos/36152_p53" w={640} cap="Imagem original e imagem anotada da armadilha McPhail. Reprodução de Medeiros (2025), PPGTCA, UTFPR Medianeira, p. 53. O trabalho completo é discutido no Bloco 13." />
+          <Fig n="artigos/36152_p53" w={640} cap="Imagem original e imagem anotada da armadilha McPhail. Reprodução de Medeiros (2025), PPGTCA, UTFPR Medianeira, p. 53. O trabalho completo é discutido na seção sobre os trabalhos da UTFPR." />
           <Callout kind="campo"><p>A documentação do WGISD descreve os critérios adotados para cachos distantes e ocluídos. Recomenda-se sua leitura antes da redação do protocolo da dupla (SANTOS et al., 2020).</p></Callout>
         </>
       ),
@@ -432,7 +438,6 @@ def concordancia(A, B, lim=0.5):
       ),
       exercicios: [
         { nivel: 'básico', q: 'Justificar a inclusão de imagens sem objetos de interesse no conjunto de treinamento.', r: <p>Essas imagens fornecem exemplos negativos de fundo (folhagem, solo, estruturas), reduzindo previsões espúrias e, portanto, falsos positivos.</p> },
-        { nivel: 'médio', q: 'Dois anotadores marcaram 20 e 24 caixas nas mesmas imagens; 18 foram associadas com IoU médio de 0,78. Calcular as caixas sem correspondência e interpretar.', r: <p>20 + 24 − 2 × 18 = 8 caixas sem correspondência. A localização é consistente (IoU médio 0,78), mas há divergência sobre quais objetos anotar, o que indica necessidade de critério de inclusão mais preciso.</p> },
         { nivel: 'médio', q: 'Discutir o viés que a pré-anotação automática sem revisão sistemática pode introduzir.', r: <p>Objetos que o modelo de pré-anotação não detecta tendem a permanecer sem rótulo e passam a ser tratados como fundo, reproduzindo no novo conjunto os erros sistemáticos daquele modelo. Revisão obrigatória e anotação independente de uma amostra mitigam o problema.</p> },
         { nivel: 'desafio', q: 'Redigir uma regra verificável para cachos parcialmente ocluídos por folhas.', r: <p>Exemplo: "Anotar o cacho quando pelo menos 30% de sua extensão estiver visível. A caixa abrange apenas a parte visível, do primeiro ao último pixel de baga visível. Quando a folha divide o cacho em partes visíveis, uma única caixa abrange todas as partes." A regra deve permitir que outro anotador reproduza a mesma caixa.</p> },
       ],
@@ -441,7 +446,7 @@ def concordancia(A, B, lim=0.5):
     {
       id: 'b15',
       cod: '1.5',
-      titulo: 'Laboratório 1: anotação, auditoria e partição dos dados',
+      titulo: 'Laboratório: anotação, auditoria e partição dos dados',
       min: 65,
       tipo: 'lab',
       slides: [
@@ -520,7 +525,6 @@ def auditar(pasta, n_classes):
       exercicios: [
         { nivel: 'básico', q: 'Explicar por que a partição aleatória das 300 imagens do WGISD pode superestimar o desempenho.', r: <p>Imagens de uma mesma variedade e sessão são correlacionadas; a partição aleatória coloca imagens muito semelhantes em treino e teste, violando a independência e subestimando o erro de generalização (ROBERTS et al., 2017).</p> },
         { nivel: 'médio', q: 'Um conjunto tem 12 voos sobre 4 propriedades. Propor uma partição e indicar o que cada conjunto estima.', r: <p>Por exemplo, três propriedades em treino e validação (separadas por voo) e a quarta propriedade integralmente no teste. A validação estima a generalização para novos voos; o teste, para uma nova propriedade.</p> },
-        { nivel: 'médio', q: 'A mediana da área relativa das caixas é 1% em imagens de 2048 × 1365. Estimar as dimensões de um cacho típico na entrada de 640 pixels.', r: <p>Supondo proporção semelhante à da imagem, o lado relativo é cerca de 10%: aproximadamente 205 × 137 pixels na imagem original e 64 × 43 pixels após a redução por um fator de 3,2.</p> },
         { nivel: 'desafio', q: 'Explicar por que aplicar aumento de dados antes da partição constitui vazamento.', r: <p>Uma imagem e sua versão transformada representam a mesma cena; se forem alocadas em conjuntos distintos, o teste passa a conter informação do treino. O aumento de dados deve ser aplicado apenas ao conjunto de treino, após a partição (KAPOOR; NARAYANAN, 2023).</p> },
       ],
     },
@@ -566,7 +570,6 @@ def auditar(pasta, n_classes):
         <p>Cada dupla formula duas questões metodológicas sobre um dos estudos (Leal et al. ou Osowski) e identifica uma informação ausente. Como atividade extraclasse, a dupla preenche a ficha de leitura de uma das referências recomendadas.</p>
       </>,
       exercicios: [
-        { nivel: 'médio', q: 'Com revocação de 90% e precisão de 96% em um rebanho de 500 animais, estimar FN, FP e o erro de contagem.', r: <p>TP = 450 e FN = 50. TP + FP = 450 / 0,96 ≈ 469, logo FP ≈ 19. A contagem estimada seria 469, com erro de −31 animais (−6,2%).</p> },
       ],
     },
   ],
@@ -585,11 +588,8 @@ def auditar(pasta, n_classes):
   ],
   quiz: [
     { p: 'A estimativa da área de cada cacho requer qual tarefa?', o: ['classificação', 'detecção', 'segmentação semântica', 'segmentação de instâncias'], a: 3, e: 'A área por objeto requer uma máscara para cada instância.' },
-    { p: 'Imagem 1000 × 500; caixa xyxy (100, 100, 300, 200). Qual a linha YOLO?', o: ['0 0.1 0.2 0.3 0.4', '0 0.2 0.3 0.2 0.2', '0 200 150 200 100', '0 0.2 0.3 0.3 0.2'], a: 1, e: 'x_c = 0,2; y_c = 0,3; w = 0,2; h = 0,2.' },
-    { p: 'Duas caixas de 100 × 100 deslocadas 50 pixels na horizontal têm IoU igual a:', o: ['0,50', '0,33', '0,25', '0,67'], a: 1, e: 'Interseção 5.000; união 15.000.' },
     { p: 'Qual nível do pescoço é mais adequado a um objeto de 20 pixels em entrada de 640?', o: ['P3 (passo 8)', 'P4 (passo 16)', 'P5 (passo 32)', 'indiferente'], a: 0, e: 'Com passo 32, o objeto ocupa menos de uma célula.' },
     { p: 'Reduzir excessivamente o limiar de IoU do NMS tende a:', o: ['manter duplicatas', 'remover objetos contíguos distintos', 'aumentar a confiança', 'não alterar o resultado'], a: 1, e: 'Sobreposições pequenas passam a provocar remoção.' },
-    { p: 'GSD para H = 40 m, p = 2,4 µm, f = 8,8 mm:', o: ['0,11 cm/pixel', '1,1 cm/pixel', '11 cm/pixel', '4,4 cm/pixel'], a: 1, e: '40 × 2,4 / 8,8 ≈ 10,9 mm.' },
     { p: 'A partição aleatória de imagens de um mesmo voo entre treino e teste caracteriza:', o: ['desbalanceamento de classes', 'vazamento de dados', 'sobreajuste do NMS', 'erro de GSD'], a: 1, e: 'Observações dependentes em conjuntos distintos (ROBERTS et al., 2017).' },
     { p: 'O conjunto de validação destina-se a:', o: ['ajustar os pesos', 'selecionar épocas, hiperparâmetros e limiares', 'reportar o desempenho final', 'aumentar os dados'], a: 1, e: 'O teste é reservado à estimativa final.' },
   ],

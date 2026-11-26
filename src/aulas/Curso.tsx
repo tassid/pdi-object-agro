@@ -2,22 +2,21 @@ import type { Aula, Bloco } from '../curso'
 import { aula1 } from './Aula1'
 import { aula2 } from './Aula2'
 import { blocoClsSeg, blocoTarefas } from './tarefas'
+import { blocoClassicos } from './classicos'
 import { PROF_TAREFAS } from './prof'
 
-/* Curso único em dois encontros de 5 h. Os blocos vêm das antigas Aula 1 e Aula 2, sem repetições,
+/* Aula única. Os blocos vêm das antigas Aula 1 e Aula 2, sem repetições,
    mais dois blocos sobre as tarefas (classificação, detecção e segmentação). */
 
 const pega = (id: string, min: number): Bloco => {
-  const b = [...aula1.blocos, ...aula2.blocos, blocoTarefas, blocoClsSeg].find((x) => x.id === id)
+  const b = [...aula1.blocos, ...aula2.blocos, blocoTarefas, blocoClsSeg, blocoClassicos].find((x) => x.id === id)
   if (!b) throw new Error(`bloco ${id} não encontrado`)
   return { ...b, min, prof: PROF_TAREFAS[id] ?? b.prof }
 }
 
 const ordem: [string, number][] = [
-  // encontro 1: das perguntas aos dados
-  ['b10', 30], ['bT1', 50], ['b12', 35], ['b13', 35], ['b14', 50], ['b15', 55], ['b21', 25],
-  // encontro 2: do treino ao campo
-  ['b22', 45], ['b23', 40], ['bT2', 35], ['b24', 50], ['b25', 45], ['b26', 40], ['b27', 25],
+  ['b10', 0], ['bT1', 0], ['bC', 0], ['b12', 0], ['b13', 0], ['b14', 0], ['b15', 0], ['b21', 0],
+  ['b22', 0], ['b23', 0], ['bT2', 0], ['b24', 0], ['b25', 0], ['b26', 0], ['b27', 0],
 ]
 
 const blocos = ordem.map(([id, min], i) => ({ ...pega(id, min), cod: String(i + 1) }))
@@ -29,27 +28,27 @@ export const curso: Aula = {
   n: 1,
   titulo: 'Detecção de objetos em imagens agrícolas com CVAT e YOLO',
   ideia:
-    'Continuação da Aula 5. O primeiro encontro parte do sistema clássico de reconhecimento de padrões, mostra as diferenças entre classificação, detecção e segmentação, e prepara os dados: arquiteturas, formatos, IoU, NMS, anotação no CVAT, auditoria, partição e o notebook no Colab. O segundo encontro é prático: treinar e ler um YOLO, fazer também classificação e segmentação, contar, rastrear, exportar, testar em outro lugar e comparar com trabalhos reais da UTFPR.',
+    'Continuação da Aula 5. A aula parte do sistema clássico de reconhecimento de padrões, mostra as diferenças entre classificação, detecção e segmentação com exemplos clássicos e com YOLO, prepara os dados (formatos, IoU, NMS, anotação no CVAT, auditoria e partição) e termina na prática: montar o Colab, treinar e ler um YOLO, contar, rastrear, exportar, testar em outro lugar e comparar com trabalhos reais da UTFPR.',
   chips: ['classificação', 'detecção', 'segmentação semântica e de instâncias', 'CVAT', 'YOLO', 'formatos de anotação', 'IoU e NMS', 'protocolo de anotação', 'partição por grupo', 'Google Colab', 'métricas', 'contagem', 'rastreamento', 'mudança de domínio', 'trabalhos da UTFPR'],
   objetivos: [
     'Relacionar o sistema clássico da Aula 5 (características, limiar, fronteira de decisão, taxas de erro) à detecção de objetos e às métricas de precisão e revocação.',
     'Distinguir classificação, detecção, segmentação semântica e segmentação de instâncias, e escolher a tarefa, a ferramenta do CVAT e o modelo YOLO adequados a uma pergunta agrícola.',
-    'Converter caixas entre os formatos xyxy, COCO e YOLO, calcular IoU e explicar o efeito do NMS e do limiar de confiança.',
+    'Ler caixas nos formatos xyxy, COCO e YOLO e explicar o que medem o IoU, o NMS e o limiar de confiança.',
     'Anotar no CVAT com um protocolo explícito, auditar os rótulos e particionar os dados por grupo de coleta, sem vazamento.',
     'Montar um notebook do Colab e treinar YOLO de detecção, classificação e segmentação a partir de pesos pré-treinados.',
     'Ler os resultados do treino (results.png, precisão, revocação, mAP, acerto) e escolher o limiar de confiança na validação.',
     'Usar o modelo para contar em fotos e vídeos, exportá-lo e testá-lo em dados de outro lugar, classificando os erros.',
     'Reconhecer essas mesmas etapas e decisões em trabalhos reais da UTFPR.',
   ],
-  encontros: [
-    { n: 1, titulo: 'das perguntas aos dados', inicio: 'b10' },
-    { n: 2, titulo: 'do treino ao campo', inicio: 'b22' },
-  ],
-  intervalos: ['b13', 'b22'],
+  encontros: [],
+  intervalos: [],
   blocos,
   notebooks: [
-    { ...aula1.notebook, nome: `Encontro 1 · ${aula1.notebook.nome}` },
-    { ...aula2.notebook, nome: `Encontro 2 · ${aula2.notebook.nome}` },
+    {
+      nome: 'CVAT_YOLO_na_pratica.ipynb',
+      arquivo: 'CVAT_YOLO_na_pratica.ipynb',
+      descricao: 'O notebook da aula, do dado anotado ao modelo em uso: preparar o Colab, carregar o WGISD ou o export do CVAT, conferir os rótulos, separar os conjuntos, treinar, ler os resultados, contar, rastrear, exportar, testar em outro lugar e fazer também classificação e segmentação.',
+    },
   ],
   quiz: [...aula1.quiz, ...aula2.quiz],
   artigos: unico([...aula2.artigos, ...aula1.artigos], (a) => a.link),

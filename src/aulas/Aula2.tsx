@@ -7,7 +7,7 @@ import R from '../resultados.json'
 
 const d2 = (v: number) => v.toFixed(2).replace('.', ',')
 const pct = (v: number) => `${(100 * v).toFixed(0)}%`
-const NB = 'Aula2_YOLO_na_pratica.ipynb'
+const NB = 'CVAT_YOLO_na_pratica.ipynb'
 
 export const aula2 = comProf(PROF2, {
   id: 'aula2',
@@ -68,7 +68,7 @@ names:
       ),
       exemplo: (
         <>
-          <Code title="Seção 1 do notebook · ambiente" code={`!nvidia-smi --query-gpu=name,memory.total --format=csv
+          <Code title="Parte 1 do notebook · preparar o Colab" code={`!nvidia-smi --query-gpu=name,memory.total --format=csv
 !pip -q install ultralytics
 import sys, torch, ultralytics
 print("torch", torch.__version__, "| ultralytics", ultralytics.__version__)
@@ -77,7 +77,7 @@ print("GPU disponível:", torch.cuda.is_available())
 from google.colab import drive
 drive.mount("/content/drive")
 BASE = "/content/drive/MyDrive/pdi_yolo"`} />
-          <Code title="Seção 2 · usar o export do CVAT da dupla" code={`import shutil, glob
+          <Code title="Parte 2 do notebook · usar o export do CVAT da dupla" code={`import shutil, glob
 shutil.unpack_archive("/content/drive/MyDrive/pdi_yolo/meu_export_cvat.zip", "/content/dataset")
 DATA = glob.glob("/content/dataset/**/data.yaml", recursive=True)[0]
 print(open(DATA).read())`} />
@@ -149,6 +149,10 @@ print(open(DATA).read())`} />
           <Fig n="real_curvas_treino" cap={`Treinos reais no WGISD: perdas de treino e validação e mAP50 na validação com pesos pré-treinados (azul) e do zero (tracejado). No teste: ${d2(R.A_pre.test.mAP50)} contra ${d2(R.A_scratch.test.mAP50)}.`} />
           <Fig n="real_parada_antecipada" cap={`Parada antecipada real: melhor época ${R.best_epoch}; sem melhora por 20 épocas, o treino parou na ${R.epochs_B}.`} />
           <Fig n="augmentation_real" cap="Transformações aplicadas pelo aumento de dados a fotos do WGISD; as caixas acompanham cada transformação." />
+          <Fig n="letterbox" cap="Antes de entrar na rede, a foto é reduzida ao tamanho de entrada. O Ultralytics preserva a proporção e completa o resto com barras, para que os objetos não fiquem achatados; as caixas acompanham a mesma transformação." />
+          <Fig n="descida_gradiente" w={680} cap="Como o modelo aprende: a cada passo ele caminha um pouco na direção que diminui o erro. Passo pequeno demais demora; passo grande demais faz o treino oscilar sem chegar ao fundo." />
+          <Fig n="lr_schedule" w={680} cap="O tamanho do passo não é fixo: começa pequeno (aquecimento), cresce e depois diminui até o fim do treino. É o padrão do Ultralytics, e não precisa ser mexido no começo." />
+          <Fig n="curvas_treino" cap="Os três cenários que as curvas revelam: perdas altas nas duas linhas (o modelo não aprendeu), perdas separando-se (começou a decorar) e o ponto em que a validação para de melhorar, que é onde o best.pt é guardado." />
           <Fig n="sahi_fatias" cap="Para objetos pequenos, uma alternativa a aumentar imgsz é dividir a foto em fatias sobrepostas (SAHI)." />
           <p>Objetos minúsculos levam essa escolha ao limite. Os dois trabalhos abaixo, da UTFPR Cornélio Procópio, detectam esporos de fungos em lâminas de microscópio com YOLO:</p>
           <Trabalho t={T.ferrugem} />
@@ -158,7 +162,7 @@ print(open(DATA).read())`} />
       pratica: (
         <>
           <p><b>Disparar o treino antes do intervalo.</b> Com uma T4, 40 épocas em 640 pixels levam cerca de 15 minutos.</p>
-          <Code title="Seção 3 do notebook · treino" code={`from ultralytics import YOLO
+          <Code title="Parte 5 do notebook · treinar" code={`from ultralytics import YOLO
 modelo = YOLO("yolo11n.pt")
 modelo.train(data=DATA, epochs=40, imgsz=640, batch=16, patience=15, seed=0,
              project=f"{BASE}/runs", name="uva", exist_ok=True)
@@ -170,7 +174,6 @@ PASTA = f"{BASE}/runs/uva"
       ),
       exercicios: [
         { nivel: 'básico', q: 'Apareceu “CUDA out of memory” no início do treino. O que mudar primeiro?', r: <p>Reduzir o <code>batch</code> (16 → 8 → 4). Se ainda faltar memória, reduzir o <code>imgsz</code>.</p> },
-        { nivel: 'médio', q: 'Os cachos ocupam em média 30 × 30 pixels nas fotos originais de 2048 pixels de largura. Com imgsz=640, quantos pixels sobram para cada cacho?', r: <p>A foto é reduzida cerca de 3,2 vezes: o cacho fica com uns 9 × 9 pixels, pouco para detectar com confiança. Vale testar imgsz=1280 ou fatiar a imagem.</p> },
       ],
     },
     /* ============================================================ 2.3 */
@@ -220,20 +223,26 @@ PASTA = f"{BASE}/runs/uva"
           <Fig n="real_arquivos_ultralytics" cap="Arquivos reais gerados pelo Ultralytics num dos treinos deste material: curvas por época, previsões num lote de validação e distribuição das caixas." />
           <Fig n="real_predicoes_teste" cap="Previsões reais no teste, uma foto por variedade. Azul: acerto; laranja: caixa sem cacho; vermelho tracejado: cacho não encontrado." />
           <Fig n="real_limiar_confianca" cap="A mesma foto com quatro limiares de confiança. P e R no título de cada painel foram calculados contra as anotações do WGISD." />
+          <Fig n="pr_curva_real" cap="A curva precisão–revocação percorre todos os limiares de uma vez: no canto esquerdo o modelo é exigente e quase não erra; à direita ele aceita tudo e acha mais objetos, errando mais. A área sob a curva resume esse equilíbrio num número só." />
           <Fig n="real_pr_f1" cap={`Curva precisão–revocação e F1 em função do limiar, calculadas sobre as previsões reais. O F1 máximo (${d2(R.F1max)}) ocorre em conf ≈ ${d2(R.conf_F1max)}.`} />
+          <p>
+            Quando sobra tempo para testar várias configurações, vale saber que sortear os valores costuma render mais do que varrer uma grade fixa: com o mesmo número de testes, o
+            sorteio experimenta mais valores do parâmetro que realmente importa.
+          </p>
+          <Fig n="grid_vs_random" w={680} cap="Com nove tentativas, a grade testa só três valores de cada parâmetro; o sorteio testa nove valores diferentes do parâmetro que mais afeta o resultado (BERGSTRA; BENGIO, 2012)." />
           <p>O mesmo procedimento aparece num TCC da UTFPR que embarcou um detector de plantas daninhas num Raspberry Pi, incluindo um falso positivo real em campo:</p>
           <Trabalho t={T.daninhas} />
         </>
       ),
       pratica: (
         <>
-          <p>Com o treino da dupla concluído (seção 4 do notebook):</p>
+          <p>Com o treino concluído (parte 6 do notebook):</p>
           <ol>
             <li>Abrir <code>results.png</code> e dizer em que época a validação parou de melhorar.</li>
             <li>Abrir <code>val_batch0_pred.jpg</code> e procurar um rótulo errado ou um cacho não anotado.</li>
             <li>Rodar a tabela de limiares e escolher o <code>conf</code> que erra menos a contagem na validação.</li>
           </ol>
-          <Code title="Seção 4 do notebook" code={`melhor = YOLO(f"{PASTA}/weights/best.pt")
+          <Code title="Parte 6 do notebook · métricas na validação" code={`melhor = YOLO(f"{PASTA}/weights/best.pt")
 val = melhor.val(data=DATA, split="val")
 print(f"precisão {val.box.mp:.2f} · revocação {val.box.mr:.2f} · mAP50 {val.box.map50:.2f}")`} />
         </>
@@ -275,32 +284,32 @@ print(f"precisão {val.box.mp:.2f} · revocação {val.box.mr:.2f} · mAP50 {val
       exemplo: (
         <>
           <Fig n="real_contagem" cap={`Contagem real por foto no teste (conf 0,25): à esquerda, detectados contra anotados; à direita, a distribuição do erro. Erro médio de ${d2(R.EAM)} cachos por foto.`} />
+          <Fig n="erro_contagem" cap="Outra forma de olhar a contagem: à esquerda, previsto contra anotado foto a foto; à direita, a distribuição do erro. É esta a medida que interessa a quem usa a contagem no campo." />
           <Fig n="rastreamento_ids" cap="Ilustração do rastreamento: uma câmera percorrendo uma foto do WGISD; cada cacho mantém o mesmo número de identificação entre os quadros." />
-          <Fig n="artigos/41807_p22" w={640} cap="Contagem de gado com YOLOv8 em fotos de drone. Reprodução de Mascaro Junior (2025), UTFPR Cornélio Procópio, p. 22. O trabalho completo está no Bloco 4." />
+          <Fig n="artigos/41807_p22" w={640} cap="Contagem de gado com YOLOv8 em fotos de drone. Reprodução de Mascaro Junior (2025), UTFPR Cornélio Procópio, p. 22. O trabalho completo está na seção sobre IoU e NMS." />
         </>
       ),
       pratica: (
         <>
-          <Code title="Seção 5 do notebook · contar e salvar" code={`import pandas as pd, glob, os
+          <Code title="Parte 7 do notebook · contar e salvar" code={`import pandas as pd, glob, os
 CONF = 0.4
 linhas = []
 for f in sorted(glob.glob("/content/dataset/images/test/*")):
     r = melhor.predict(f, conf=CONF, verbose=False)[0]
     linhas.append({"foto": os.path.basename(f), "cachos": len(r.boxes)})
 pd.DataFrame(linhas).to_csv(f"{BASE}/contagem.csv", index=False)`} />
-          <Code title="Seção 5 · vídeo com rastreamento" code={`ids = set()
+          <Code title="Parte 7 · vídeo com rastreamento" code={`ids = set()
 for r in melhor.track("fileira.mp4", tracker="bytetrack.yaml", conf=CONF, persist=True, stream=True):
     if r.boxes.id is not None:
         ids.update(r.boxes.id.int().tolist())
 print("cachos diferentes:", len(ids))`} />
-          <Code title="Seção 5 · exportar" code={`caminho = melhor.export(format="onnx", imgsz=640)
+          <Code title="Parte 7 · exportar" code={`caminho = melhor.export(format="onnx", imgsz=640)
 print(len(YOLO(caminho).predict("foto.jpg")[0].boxes), "caixas no modelo exportado")`} />
           <p><b>Desafio da dupla:</b> tirar três fotos com o celular (frutas, grãos, folhas) e rodar o modelo nelas. O que acontece com um objeto que ele nunca viu?</p>
         </>
       ),
       exercicios: [
         { nivel: 'básico', q: 'Num vídeo, a soma das detecções em todos os quadros foi 900 e o rastreador deu 75 identificações. Quantos cachos há?', r: <p>Aproximadamente 75. Os 900 são o mesmo cacho contado em vários quadros (cerca de 12 vezes cada).</p> },
-        { nivel: 'médio', q: 'Em dez fotos, a contagem errou +2, −2, +1, −1, 0, +3, −3, 0, +1, −1. O total bate com o anotado. A contagem está boa?', r: <p>O total bate porque os erros se compensam, mas em média cada foto erra 1,4 cacho. É o erro por foto que interessa a quem usa a contagem por planta ou por talhão.</p> },
       ],
     },
     /* ============================================================ 2.5 */
@@ -329,7 +338,7 @@ print(len(YOLO(caminho).predict("foto.jpg")[0].boxes), "caixas no modelo exporta
           </p>
           <p>
             Depois do número, vem a análise de erros: olhar foto por foto e dar uma causa para cada erro. É comum descobrir que parte dos “falsos positivos” são cachos que ninguém anotou,
-            o que é um problema do protocolo de anotação (Bloco 5), e não do modelo.
+            o que é um problema do protocolo de anotação, e não do modelo.
           </p>
         </>
       ),
@@ -337,17 +346,18 @@ print(len(YOLO(caminho).predict("foto.jpg")[0].boxes), "caixas no modelo exporta
         <>
           <Fig n="real_dominio_syrah" cap="Experimento real: métricas na validação (variedades vistas) e no teste (Syrah, nunca vista), e previsões numa foto de Syrah." />
           <Fig n="dominio_variedades" cap="Uma foto de cada variedade do WGISD com as caixas anotadas: cor, fundo e densidade mudam de uma para outra." />
+          <Fig n="dominio_cor" cap="Por que a troca de variedade atrapalha: a cor e o brilho dos cachos de cada variedade ocupam faixas diferentes. O modelo aprendeu as faixas que viu no treino." />
           <Fig n="iluminacao" cap="Mudanças sintéticas de luz, cor, ruído e foco aplicadas a uma foto. Servem para testar robustez, mas não substituem fotos reais de outro lugar." />
         </>
       ),
       pratica: (
         <>
           <ol>
-            <li>Rodar a seção 6 do notebook e comparar validação e teste.</li>
+            <li>Rodar a parte 8 do notebook e comparar validação e teste.</li>
             <li>Nas cinco fotos de teste exibidas, marcar cada erro com uma causa: oclusão, tamanho, borda, luz, duplicata ou cacho não anotado.</li>
             <li>Montar uma tabela com quantos erros de cada tipo a dupla encontrou e propor uma ação para o tipo mais frequente (mais fotos de que tipo? mudar o protocolo? aumentar imgsz?).</li>
           </ol>
-          <Code title="Seção 6 do notebook" code={`teste = melhor.val(data=DATA, split="test")
+          <Code title="Parte 8 do notebook" code={`teste = melhor.val(data=DATA, split="test")
 print("validação mAP50:", round(val.box.map50, 3), "| teste mAP50:", round(teste.box.map50, 3))`} />
         </>
       ),
@@ -382,12 +392,12 @@ print("validação mAP50:", round(val.box.map50, 3), "| teste mAP50:", round(tes
           <Trabalho t={T.mosca} />
           <Trabalho t={T.alface} />
           <Trabalho t={T.espelho} />
-          <p>A soja (detecção e classificação em cascata) e as espécies florestais (segmentação de instâncias) estão no Bloco 2.</p>
+          <p>A soja (detecção e classificação em cascata) e as espécies florestais (segmentação de instâncias) estão na seção sobre as tarefas.</p>
         </>
       ),
       pratica: (
         <>
-          <p><b>Em duplas (20 min).</b> Escolher um dos trabalhos (deste bloco ou do Bloco 2) e preencher a ficha abaixo, com a página de onde tirou cada informação.</p>
+          <p><b>Em duplas (20 min).</b> Escolher um dos trabalhos desta seção (ou da seção sobre as tarefas) e preencher a ficha abaixo, com a página de onde tirou cada informação.</p>
           <table className="tbl">
             <thead><tr><th>etapa</th><th>no trabalho</th><th>no nosso notebook</th></tr></thead>
             <tbody>
@@ -454,7 +464,7 @@ print("validação mAP50:", round(val.box.map50, 3), "| teste mAP50:", round(tes
     <><b>Leitura dos resultados</b>: results.png comentado, precisão, revocação, mAP50 e erro de contagem na validação, e o limiar escolhido com justificativa.</>,
     <><b>Teste em outro lugar</b>: fotos de outra origem, nunca usadas no treino, e a comparação com a validação.</>,
     <><b>Dez erros analisados</b>, com recorte da foto e causa provável.</>,
-    <><b>Ficha de um trabalho da UTFPR</b> (Bloco 13) e demonstração do modelo em fotos ou vídeo.</>,
+    <><b>Ficha de um trabalho da UTFPR</b> e demonstração do modelo em fotos ou vídeo.</>,
   ],
   limitacoes: [
     <>Os números e as figuras de resultados vêm de treinos reais do YOLO11n no WGISD (Ultralytics 8.3.224, uma execução por configuração, semente 0). Outras versões, GPUs ou sementes dão números próximos, mas não idênticos.</>,

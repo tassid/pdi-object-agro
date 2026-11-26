@@ -109,6 +109,11 @@ export const blocoTarefas: Bloco = {
       </table>
       <Fig n="real_cls_matriz" w={600} cap={`Matriz de confusão real do classificador de variedades, em ${R.cls_n_test} recortes de teste. Cachos da mesma foto ficam sempre no mesmo conjunto.`} />
       <Fig n="real_seg_pred" cap="Segmentação de instâncias: contornos anotados no WGISD (esquerda) e máscaras previstas pelo YOLO11n-seg (direita), na mesma foto de teste." />
+      <p>
+        Uma forma prática de enxergar os erros de qualquer uma dessas tarefas é a <b>matriz de confusão</b>: cada linha é o que existe de verdade, cada coluna é o que o modelo disse. A
+        diagonal são os acertos; tudo fora dela é erro, e a posição diz que tipo de erro foi.
+      </p>
+      <Fig n="matriz_confusao" w={620} cap="Como se lê uma matriz de confusão (valores ilustrativos): a diagonal traz os acertos; a linha “fundo” são objetos inventados pelo modelo e a coluna “fundo”, objetos que ele deixou passar." />
       <h4>No CVAT</h4>
       <Fig n="cvat/image249" w={520} cap="Classificação: tags aplicadas ao quadro inteiro. Fonte: documentação do CVAT." />
       <Fig n="cvat/image013_detrac" cap="Detecção: um retângulo por objeto. Fonte: documentação do CVAT." />
@@ -180,8 +185,8 @@ export const blocoClsSeg: Bloco = {
   ),
   pratica: (
     <>
-      <p>Seção 8 do notebook: transformar as caixas do WGISD em recortes por variedade e treinar um classificador em poucos minutos; opcionalmente, treinar a segmentação.</p>
-      <Code title="Seção 8 · classificação a partir das caixas" code={`import cv2, os, glob
+      <p>Parte 9 do notebook: transformar as caixas do WGISD em recortes por variedade e treinar um classificador em poucos minutos; opcionalmente, treinar a segmentação.</p>
+      <Code title="Parte 9 do notebook · classificação a partir das caixas" code={`import cv2, os, glob
 VAR = {"CDY": "chardonnay", "CFR": "cabernet_franc", "CSV": "cabernet_sauvignon", "SVB": "sauvignon_blanc", "SYH": "syrah"}
 for split in ["train", "val"]:
     for f in glob.glob(f"/content/dataset/images/{split}/*.jpg"):
@@ -196,7 +201,7 @@ cls = YOLO("yolo11n-cls.pt")
 cls.train(data="/content/recortes", epochs=15, imgsz=224, project=f"{BASE}/runs", name="cls")
 r = cls.predict("/content/recortes/val/syrah/" + os.listdir("/content/recortes/val/syrah")[0])[0]
 print(r.names[r.probs.top1], float(r.probs.top1conf))`} />
-      <Callout kind="pegadinha"><p>No notebook, a Syrah está só no teste da detecção. Para a classificação de variedades, ela precisa estar também no treino; por isso a seção 8 usa os recortes das quatro variedades do treino ou refaz a partição incluindo a Syrah.</p></Callout>
+      <Callout kind="pegadinha"><p>No notebook, a Syrah está só no teste da detecção. Para a classificação de variedades, ela precisaria estar também no treino; por isso a parte 9 usa os recortes das quatro variedades que aparecem no treino.</p></Callout>
     </>
   ),
   exercicios: [

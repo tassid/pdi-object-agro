@@ -18,9 +18,9 @@ export const PROF1: ProfAula = {
   aula: {
     preparo: [
       'Criar no CVAT (app.cvat.ai ou instância do laboratório) um projeto com a classe “cacho” e uma tarefa com 20 imagens do WGISD por dupla; gerar os convites com antecedência.',
-      'Testar o notebook Aula1_Anotacao_Auditoria_Split.ipynb no Colab da sala, com a versão do Ultralytics que será usada (este material foi testado com 8.3.224).',
+      'Rodar uma vez o notebook CVAT_YOLO_na_pratica.ipynb inteiro na conta da sala, para baixar o WGISD e os pesos com antecedência e conferir a versão do Ultralytics.',
       'Separar três imagens ambíguas (cachos contíguos, ocluídos e cortados) para a anotação sem protocolo do Bloco 5.',
-      'Imprimir ou projetar a ficha de leitura crítica do Bloco 13 e abrir os PDFs dos trabalhos da UTFPR (RIUT bloqueia downloads automatizados; abrir pelo navegador).',
+      'Imprimir ou projetar a ficha de leitura crítica dos trabalhos e abrir os PDFs dos trabalhos da UTFPR (RIUT bloqueia downloads automatizados; abrir pelo navegador).',
       'Levar o PPT da Aula 5 aberto nos slides 17, 27, 35 e 38 para a retomada do Bloco 1.',
     ],
     planoB: [
@@ -67,7 +67,7 @@ export const PROF1: ProfAula = {
       ],
       perguntas: ['O que acontece com a contagem se o limiar de IoU do NMS for 0,99?', 'Por que o modelo do COCO não encontra uvas?'],
       erros: ['Confundir o limiar de IoU do NMS com o limiar de IoU da avaliação (0,5 no mAP50).'],
-      materiais: ['Colab com GPU aberto antes do intervalo para a inferência ao vivo.'],
+      materiais: ['Colab com GPU já aberto para a inferência ao vivo.'],
     },
     b14: {
       roteiro: [
@@ -103,8 +103,8 @@ export const PROF2: ProfAula = {
     preparo: [
       'Conferir no Colab da sala: GPU T4 disponível, ultralytics instalado e pesos yolo11n.pt baixados (ou levar o arquivo em pendrive).',
       'Deixar o conjunto do encontro 1 de cada dupla no Google Drive, já auditado; manter o WGISD original como alternativa.',
-      'Disparar o treino no fim do Bloco 8, antes do intervalo; com 40 épocas e imgsz 640 leva cerca de 15 min numa T4.',
-      'Rodar uma vez o notebook Aula2_YOLO_na_pratica.ipynb inteiro na conta da sala, para baixar o WGISD e os pesos com antecedência.',
+      'Disparar o treino assim que a turma terminar de montar o notebook; com 40 épocas e imgsz 640 leva cerca de 15 min numa T4, e ele roda enquanto a aula segue.',
+      'Deixar o link do notebook e a pasta do Drive prontos para a turma copiar.',
       'Imprimir a ficha do Bloco 13 e abrir os PDFs da mosca-das-frutas, soja, alface e espécies florestais (RIUT).',
     ],
     planoB: [
@@ -202,7 +202,7 @@ export const PROF_TAREFAS: Record<string, Prof> = {
     roteiro: [
       ['0–8 min', 'Tabela do que muda no código entre as tarefas (pesos, data, saída do predict, métrica).'],
       ['8–15 min', 'Resultados reais: matriz de confusão das variedades e máscaras previstas.'],
-      ['15–35 min', 'Seção 8 do notebook: gerar recortes das caixas e treinar o classificador (15 épocas, poucos minutos numa T4). Segmentação como tarefa opcional.'],
+      ['15–35 min', 'Parte 9 do notebook: gerar recortes das caixas e treinar o classificador (poucos minutos numa T4). Segmentação como tarefa opcional.'],
     ],
     erros: ['Sortear recortes sem respeitar a foto de origem (vazamento).', 'Passar o data.yaml de detecção para o modelo -seg (rótulos sem polígonos).'],
   },

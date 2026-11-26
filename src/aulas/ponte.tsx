@@ -28,15 +28,13 @@ export const blocoPonte: Bloco = {
         características são <b>escolhidas pelo projetista</b>.
       </p>
       <Thm k="def" n="1" nome="regra de decisão por limiar">
-        Seja <M t="x" /> uma característica escalar e <M t="\omega_1, \omega_2" /> duas classes. A regra de limiar atribui <M t="\omega_2" /> quando <M t="x \geq t" /> e{' '}
-        <M t="\omega_1" /> caso contrário. O limiar de menor erro minimiza
+        Escolhe-se uma característica (por exemplo, o brilho do cacho) e um valor de corte <M t="t" />: acima do corte, uma classe; abaixo, a outra. O melhor corte é o que erra menos.
       </Thm>
-      <MM n="1" t={String.raw`E(t) = P(x \geq t \mid \omega_1)\,P(\omega_1) + P(x < t \mid \omega_2)\,P(\omega_2).`} />
+      <MM n="1" t={String.raw`\text{erro}(t) = \text{fração de uma classe acima do corte} + \text{fração da outra abaixo}`} />
       <p>
-        Quando os erros têm custos diferentes, como no exemplo em que salmão embalado com robalo é aceitável mas o contrário não, minimiza-se o custo esperado, com <M t="c_{12}" /> o
-        custo de decidir <M t="\omega_2" /> sendo <M t="\omega_1" /> e <M t="c_{21}" /> o custo inverso:
+        Quando os erros têm custos diferentes, como no exemplo em que salmão embalado com robalo é aceitável mas o contrário não, cada tipo de erro ganha um peso e o corte passa a
+        minimizar o custo, e não o número de erros. O corte se desloca na direção do erro mais barato.
       </p>
-      <MM n="2" t={String.raw`C(t) = c_{12}\,P(x \geq t \mid \omega_1)\,P(\omega_1) + c_{21}\,P(x < t \mid \omega_2)\,P(\omega_2).`} />
       <p>
         Com mais de uma característica, a regra passa a ser uma <b>fronteira de decisão</b> no espaço de características. A Aula 5 mostrou que fronteiras muito simples subajustam e
         fronteiras muito complexas sobreajustam: decoram o treino e generalizam mal. O perceptron (slide 31 da Aula 5) é o modelo linear mais simples para essa fronteira.
@@ -48,16 +46,17 @@ export const blocoPonte: Bloco = {
         verdadeiro positivo (VP), uma caixa sem objeto é um falso positivo (FP) e um objeto sem caixa é um falso negativo (FN). A confiabilidade corresponde à <b>precisão</b> e a
         fração de objetos encontrados, à <b>revocação</b>:
       </p>
-      <MM n="3" t={String.raw`P = \frac{VP}{VP + FP}, \qquad R = \frac{VP}{VP + FN}.`} />
+      <MM n="2" t={String.raw`P = \frac{VP}{VP + FP}, \qquad R = \frac{VP}{VP + FN}.`} />
+      <p>Em palavras: a precisão diz quantas das caixas desenhadas estão certas; a revocação, quantos dos objetos que existem foram encontrados.</p>
       <p>
-        A rejeição da Aula 5 tem um análogo direto: previsões abaixo do limiar de confiança são descartadas. Aumentar o limiar rejeita mais, eleva a precisão e reduz a revocação. O
-        Bloco 4 retoma esse compromisso com previsões reais.
+        A rejeição da Aula 5 tem um análogo direto: previsões abaixo do limiar de confiança são descartadas. Aumentar o limiar rejeita mais, eleva a precisão e reduz a revocação. A seção sobre
+        IoU, NMS e limiares retoma esse compromisso com previsões reais.
       </p>
       <h4>O que muda na detecção</h4>
       <p>
         A diferença essencial é o ponto de entrada. O detector recebe a imagem inteira e precisa responder, para cada objeto, onde ele está (uma caixa), o que ele é (uma classe) e com que
         confiança. As características deixam de ser escolhidas pelo projetista e passam a ser aprendidas a partir de exemplos anotados (LECUN; BENGIO; HINTON, 2015). Com isso, o
-        principal custo do projeto se desloca do desenho das características para a <b>obtenção e a qualidade dos rótulos</b>, tema do Bloco 5.
+        principal custo do projeto se desloca do desenho das características para a <b>obtenção e a qualidade dos rótulos</b>, tema da seção sobre anotação no CVAT.
       </p>
     </>
   ),
@@ -78,6 +77,17 @@ export const blocoPonte: Bloco = {
       <Callout kind="pegadinha" title="Observação">
         <p>As fotos de Syrah do WGISD foram feitas antes da maturação, quando os cachos ainda são verdes. A característica “cor” que parecia óbvia não separa as classes nesse conjunto: o mesmo problema reaparece em detectores treinados numa época do ciclo e usados em outra (Bloco 12).</p>
       </Callout>
+      <h4>O perceptron da Aula 5, em imagens</h4>
+      <p>
+        O perceptron traça uma única reta para separar duas classes. Quando as classes se separam por uma reta, ele encontra essa reta sozinho; quando não se separam, ele nunca
+        acerta todos os exemplos, por mais que o treino continue. A solução é empilhar unidades em camadas: a fronteira deixa de ser uma reta e passa a curvar.
+      </p>
+      <Fig n="perceptron_and_or_xor" cap="O perceptron em três problemas clássicos: nos dois primeiros ele encontra a reta que separa as classes; no terceiro, não existe reta possível e o treino não converge." />
+      <Fig n="mlp_xor" cap="Com uma camada escondida entre a entrada e a saída, a fronteira deixa de ser uma reta e o mesmo problema passa a ser resolvido. O gráfico da direita mostra o erro caindo ao longo do treino." />
+      <p>
+        É daí que vêm as redes neurais usadas em visão computacional: muitas unidades simples empilhadas, treinadas a partir de exemplos. O YOLO é uma rede desse tipo, especializada
+        em encontrar objetos.
+      </p>
       <Fig n="aula5_recorte_vs_deteccao" cap={<>À esquerda, a entrada típica da Aula 5: um objeto já recortado. À direita, a entrada de um detector: a foto inteira, com todos os cachos anotados.</>} />
     </>
   ),
@@ -104,7 +114,6 @@ print("limiar:", ts[np.argmin(erro)], "erro:", min(erro))`} />
     </>
   ),
   exercicios: [
-    { nivel: 'básico', q: 'Um detector encontrou 45 dos 50 cachos de uma imagem e gerou 5 caixas sem cacho. Calcular precisão e revocação.', r: <p>VP = 45, FN = 5, FP = 5. <M t="P = 45/50 = 0{,}90" /> e <M t="R = 45/50 = 0{,}90" />.</p> },
     { nivel: 'básico', q: 'Relacionar a confiabilidade da Aula 5 à precisão em detecção.', r: <p>Ambas dividem os acertos pelo total de decisões tomadas (acertos mais erros), desconsiderando os casos rejeitados ou não detectados.</p> },
     { nivel: 'médio', q: 'Na Figura 2, por que o limiar de menor custo produz erro total maior que o limiar de menor erro?', r: <p>Ele aceita mais erros baratos (Chardonnay classificada como Syrah) para evitar erros caros (Syrah como Chardonnay). Minimizar o custo esperado (Eq. 2) não é o mesmo que minimizar o número de erros (Eq. 1).</p> },
     { nivel: 'desafio', q: 'Explicar por que o vizinho mais próximo tem erro de treino zero e por que isso não é evidência de bom modelo.', r: <p>Cada ponto de treino é o seu próprio vizinho mais próximo, logo é sempre classificado corretamente. O erro relevante é o de dados não vistos; a Figura 3 mostra que ele piora em relação ao perceptron, caracterizando sobreajuste.</p> },

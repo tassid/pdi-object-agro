@@ -1,16 +1,39 @@
 # Detecção de objetos em imagens agrícolas com CVAT e YOLO
 
-Guia interativo único, dado em **2 encontros de 5 horas** (300 min cada, com intervalo de 20 min), continuação da **Aula 5 (Reconhecimento de Padrões)** da disciplina Processamento de Imagens Aplicado à Agroindústria (PPGTCA, UTFPR Medianeira).
+Guia interativo de uma aula, continuação da **Aula 5 (Reconhecimento de Padrões)** da disciplina Processamento de Imagens Aplicado à Agroindústria (PPGTCA, UTFPR Medianeira).
 
 - Alunos: https://tassid.github.io/pdi-object-agro/
-- Professor: https://tassid.github.io/pdi-object-agro/professor/ (roteiro minuto a minuto, perguntas, dificuldades frequentes, preparação, plano B, rubrica, soluções abertas e notas de cada slide no modo apresentação)
+- Professor: https://tassid.github.io/pdi-object-agro/professor/ (roteiro docente, perguntas, dificuldades frequentes, preparação, plano B, rubrica, soluções abertas e notas de cada slide no modo apresentação)
 
-Cada bloco segue **teoria → exemplos → prática**, com slides integrados (emulador no próprio site, no tema visual da Aula 5), exercícios com solução e laboratórios que rodam no navegador ou no Colab. A tipografia segue o LaTeX (Computer Modern, fórmulas em KaTeX, definições e exemplos numerados).
+Cada seção segue **teoria → exemplos → prática**, com slides integrados (emulador no próprio site, no tema visual da Aula 5), exercícios com solução e laboratórios que rodam no navegador. A tipografia segue o LaTeX (Computer Modern, fórmulas em KaTeX). As fórmulas aparecem com a explicação em palavras; o material não pede contas manuais.
 
-| Encontro | Blocos | Notebook |
-|---|---|---|
-| 1 · das perguntas aos dados | 1 da Aula 5 à detecção · 2 classificação, detecção e segmentação: etapas e diferenças · 3 arquiteturas e formatos · 4 IoU, NMS, GSD · 5 protocolo no CVAT · 6 Lab: anotação, auditoria e partição · 7 montar o Colab | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tassid/pdi-object-agro/blob/main/notebooks/Aula1_Anotacao_Auditoria_Split.ipynb) |
-| 2 · do treino ao campo | 8 treinar um YOLO · 9 ler os resultados · 10 classificação e segmentação com YOLO · 11 Lab: contar, rastrear, exportar · 12 Lab: testar em outro lugar · 13 trabalhos da UTFPR · 14 projeto da dupla | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tassid/pdi-object-agro/blob/main/notebooks/Aula2_YOLO_na_pratica.ipynb) |
+## Sequência da aula
+
+1. Da Aula 5 à detecção de objetos
+2. Classificação, detecção e segmentação: etapas e diferenças
+3. As mesmas tarefas sem rede neural: cinco casos reais (laboratórios no navegador)
+4. Arquiteturas e formatos de anotação
+5. IoU, NMS, GSD e inferência com modelo pré-treinado
+6. Protocolo de anotação no CVAT
+7. Laboratório: anotação, auditoria e partição dos dados
+8. Montar o Colab do zero
+9. Treinar um YOLO
+10. Ler os resultados do treino
+11. Classificação e segmentação com YOLO na prática
+12. Laboratório: contar, rastrear e exportar
+13. Laboratório: testar em outro lugar e analisar os erros
+14. Trabalhos reais da UTFPR, passo a passo
+15. Projeto da dupla e orientações
+
+## Notebook
+
+Um único Colab, do dado anotado ao modelo em uso:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tassid/pdi-object-agro/blob/main/notebooks/CVAT_YOLO_na_pratica.ipynb)
+
+```bash
+python scripts/gerar_notebook.py   # regenera notebooks/CVAT_YOLO_na_pratica.ipynb
+```
 
 ## Imagens
 
@@ -50,15 +73,17 @@ src/
   App.tsx            página inicial e navegação (#inicio, #aula1, #aula2)
   curso.tsx          modelo de aula, visão aluno/professor, emulador de slides, modo apresentação, KaTeX
   trabalhos.tsx      metadados dos trabalhos da UTFPR
-  aulas/Curso.tsx    composição do curso: ordem dos 14 blocos, encontros e intervalos
+  aulas/Curso.tsx    composição da aula: ordem das seções
+  aulas/classicos.tsx  casos clássicos trazidos do site anterior (pdi-agro)
+  casos/             laboratórios dos casos clássicos (tomate, aviário, soja, laranjeira, citros)
   aulas/ponte.tsx    Bloco 1 (retomada da Aula 5)
   aulas/tarefas.tsx  Blocos 2 e 10 (classificação, detecção e segmentação)
   aulas/Aula1.tsx    blocos de dados, formatos, IoU/NMS e CVAT
   aulas/Aula2.tsx    blocos práticos de YOLO
   aulas/prof.tsx     conteúdo exclusivo da visão do professor
   labs.tsx           laboratórios no navegador (IoU, NMS, conversor, partição, GSD)
-scripts/             treino, figuras reais, figuras didáticas e gerador do notebook da Aula 2
-notebooks/           notebooks do Colab
+scripts/             treino, figuras reais, figuras didáticas e gerador do notebook
+notebooks/           o notebook do Colab
 ```
 
 A visão do professor é uma página pública sem senha (não indexada); não coloque nela nada que não possa ser visto pelos alunos.
